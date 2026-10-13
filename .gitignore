@@ -1,0 +1,31 @@
+# ============ 数据 ============
+# 全量春节窗口数据（约 180 个文件、10–30MB）可由脚本重新生成，不入库。
+#   python3 -I scripts/download_aqi.py
+data/*
+!data/README.md
+# 例外：保留两个单日样例，便于组员了解文件格式
+!data/raw_china_cities_20190204.csv
+!data/raw_china_cities_20250128.csv
+
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# ============ 编辑器 / 系统 ============
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# ============ 本地临时文件 ============
+*.log
+tmp/
+scratch/
