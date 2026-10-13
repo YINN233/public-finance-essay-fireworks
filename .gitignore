@@ -29,3 +29,6 @@ Thumbs.db
 *.log
 tmp/
 scratch/
+
+# 制图 QA 中间产物（由 make_figs.py 可再生）
+figs/_preview_*.png
