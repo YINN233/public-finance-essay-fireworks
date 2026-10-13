@@ -200,7 +200,8 @@ def main():
         print("写入 %s（%d 行）" % (args.out_hourly, len(focus_hourly)))
 
     # ---------- 聚焦城市：除夕当日（rel_day = 0）对照 ----------
-    print("\n=== 聚焦城市 · 除夕当日（rel_day=0），跨年份均值 ===")
+    # 注意：尖峰在正月初一（rel_day = +1），不在除夕（0）——见 README §1.5
+    print("\n=== 聚焦城市 · 正月初一（rel_day=+1），跨年份均值 ===")
     print("%-12s %5s %8s %8s %8s %8s" % ("城市", "年份数", "PM2.5", "PM10", "比值", "NO2"))
     for city in args.focus:
         if city not in store:
@@ -209,7 +210,7 @@ def main():
         rows = []
         for day, d in store[city].items():
             rel, _ = rel_and_cny_year(day, eves)
-            if rel != 0:
+            if rel != 1:          # 初一为尖峰日；改回 0 会取到被稀释的除夕日均
                 continue
             pm = [v for v in d.get("PM2.5", []) if v is not None]
             if len(pm) < args.min_hours:
