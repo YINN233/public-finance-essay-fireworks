@@ -70,8 +70,20 @@ def read_policy(path, panel_cities):
     tl = defaultdict(list)
     unmatched = set()
     with open(path, encoding="utf-8-sig") as fh:
-        lines = [ln for ln in fh if not ln.lstrip().startswith("#")]
-    for r in csv.DictReader(lines):
+        lines = [ln.rstrip("\n") for ln in fh if not ln.lstrip().startswith("#")]
+    for ln, r in zip(lines, csv.DictReader(lines)):
+        # 字段数校验：未加引号的逗号（多字段）或漏写逗号（少字段）都会让整行
+        # 静默错位而不报错——例如把 URL 读成发文主体。必须显式拦下来。
+        extra = r.get(None)
+        miss = [k for k, v in r.items() if k is not None and v is None]
+        if extra or miss:
+            why = []
+            if extra:
+                why.append("多出 %d 个字段（疑似字段内含未加引号的逗号）" % len(extra))
+            if miss:
+                why.append("缺少字段 %s（疑似漏写逗号）" % "、".join(miss))
+            print("   !! 字段数异常，该行会错位：%s" % "；".join(why), file=sys.stderr)
+            print("      %s" % ln[:90], file=sys.stderr)
         raw = (r.get("city_name") or "").strip()
         if not raw:
             continue
@@ -142,10 +154,12 @@ def main():
         return best
 
     cols = list(rows[0].keys()) + ["policy_type", "ban", "restrict",
-                                   "agency_cat", "days_since_change"]
+                                   "agency_cat", "days_since_change",
+                                   "tax_instrument"]
     n_matched = 0
     type_counts = defaultdict(set)          # policy_type -> 城市集合
     agency_counts = defaultdict(set)        # agency_cat -> 城市集合
+    tax_counts = defaultdict(set)           # tax_instrument -> 城市集合
     with open(args.out, "w", newline="", encoding="utf-8-sig") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()
@@ -157,21 +171,25 @@ def main():
             st = status(r["city"], d)
             if st is None:
                 r.update(policy_type="", ban="", restrict="",
-                         agency_cat="", days_since_change="")
+                         agency_cat="", days_since_change="", tax_instrument="")
             else:
                 eff, pol = st
                 pt = (pol.get("policy_type") or "").strip()
                 cat = agency_cat(pol.get("issuing_agency"))
+                tax = (pol.get("tax_instrument") or "").strip()
                 r.update(policy_type=pt,
                          ban=1 if pt == "3" else 0,
                          restrict=1 if pt == "2" else 0,
                          agency_cat=cat,
-                         days_since_change=(d - eff).days)
+                         days_since_change=(d - eff).days,
+                         tax_instrument=tax)
                 n_matched += 1
                 if pt:
                     type_counts[pt].add(r["city"])
                 if cat:
                     agency_counts[cat].add(r["city"])
+                if tax:
+                    tax_counts[tax].add(r["city"])
             w.writerow(r)
 
     print("写入 %s（%d 行，其中 %d 行匹配到政策）" % (args.out, len(rows), n_matched))
@@ -190,8 +208,19 @@ def main():
 
     if agency_counts:
         print("\n=== 发文主体分布（政策动机的代理变量）===")
+        TAX_LABEL = {"0": "无（仅命令控制）", "1": "有地方价格型工具",
+                     "2": "国家消费税（背景）"}
         for k, v in sorted(agency_counts.items(), key=lambda kv: -len(kv[1])):
             print("  %-10s %3d 城" % (k, len(v)))
+
+    print("\n=== 价格型工具（tax_instrument）===")
+    if tax_counts:
+        for k, v in sorted(tax_counts.items(), key=lambda kv: -len(kv[1])):
+            print("  %s %-22s %3d 城" % (k, TAX_LABEL.get(k, k), len(v)))
+    else:
+        print("  目前没有任何城市记录到价格型工具（或该字段尚未填写）。")
+    print("  注：文章第二块机制的前提是「现实中几乎没有城市用价格工具管燃放」，")
+    print("      这是一条需要用政策库证实的断言——查满全部地级市之前不要写进结论。")
 
     # 政策类型 × 相对日 的均值表（快速判断变异是否存在）
     print("\n=== 政策类型 × 相对日：日均 PM2.5 均值（μg/m³）===")
