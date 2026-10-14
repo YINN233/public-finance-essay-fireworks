@@ -44,6 +44,10 @@ AGENCY_KEYS = [("生态环境", "eco"), ("环保", "eco"), ("应急", "emergency
                ("公安", "police"), ("消防", "emergency"), ("人大", "npc"),
                ("政府", "gov")]
 
+# tax_instrument 字段的取值含义（模块级：早先误写在 if 块内，无记录时会 NameError）
+TAX_LABEL = {"0": "无（仅命令控制）", "1": "有地方价格型工具",
+             "2": "国家消费税（背景）"}
+
 
 def norm_city(name, panel_cities):
     name = (name or "").strip()
@@ -208,8 +212,6 @@ def main():
 
     if agency_counts:
         print("\n=== 发文主体分布（政策动机的代理变量）===")
-        TAX_LABEL = {"0": "无（仅命令控制）", "1": "有地方价格型工具",
-                     "2": "国家消费税（背景）"}
         for k, v in sorted(agency_counts.items(), key=lambda kv: -len(kv[1])):
             print("  %-10s %3d 城" % (k, len(v)))
 

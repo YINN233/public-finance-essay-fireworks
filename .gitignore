@@ -3,9 +3,9 @@
 #   python3 -I scripts/download_aqi.py
 data/*
 !data/README.md
-# 例外：保留两个单日样例，便于组员了解文件格式
-!data/raw_china_cities_20190204.csv
-!data/raw_china_cities_20250128.csv
+# 例外：data/samples/ 下保留两个单日样例，便于组员了解文件格式
+!data/samples
+!data/samples/*
 
 # ============ Python ============
 __pycache__/

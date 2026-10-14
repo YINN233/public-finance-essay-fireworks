@@ -37,16 +37,56 @@ from collections import defaultdict
 
 import numpy as np
 
-SKILL = "/home/yinnchen/.claude/skills/scipilot-figure-skill/scripts"
-sys.path.insert(0, SKILL)
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from setup_style import setup_style
-from export_figure import export_figure
-from visual_qa import render_preview, audit_layout, print_report
-from layout_tools import add_panel_labels
+
+# 出图使用 SciPilot 技能（期刊样式、视觉自检、灰度预览）。该技能是**本机安装**的，
+# 别人克隆本仓库时不一定有，因此做成可选：找不到就退回内置的 matplotlib 样式。
+# 需要时可用环境变量指定路径：export SCIPILOT_SKILL=/path/to/scipilot-figure-skill/scripts
+SKILL = os.environ.get(
+    "SCIPILOT_SKILL",
+    os.path.expanduser("~/.claude/skills/scipilot-figure-skill/scripts"))
+if os.path.isdir(SKILL) and SKILL not in sys.path:
+    sys.path.insert(0, SKILL)
+try:
+    from setup_style import setup_style
+    from export_figure import export_figure
+    from visual_qa import render_preview, audit_layout, print_report
+    from layout_tools import add_panel_labels
+    HAS_SKILL = True
+except ImportError:
+    HAS_SKILL = False
+
+    def setup_style(journal="general", lang="en", **kw):
+        """内置回退：只设置一组可读的字号与 DPI。"""
+        plt.rcParams.update({
+            "savefig.dpi": 300, "figure.dpi": 300, "font.size": 8,
+            "axes.labelsize": 8, "axes.titlesize": 8.5,
+            "xtick.labelsize": 7, "ytick.labelsize": 7,
+            "legend.fontsize": 6.2, "axes.unicode_minus": False,
+        })
+        return {"journal": journal, "lang": lang, "fallback": True}
+
+    def export_figure(fig, basename, formats=("pdf", "png"), dpi=300,
+                      size_inches=None, grayscale_preview=False, **kw):
+        for ext in formats:
+            fig.savefig("%s.%s" % (basename, ext), dpi=dpi, bbox_inches="tight")
+            print("  [内置回退] 写入 %s.%s" % (basename, ext))
+
+    def render_preview(fig, out_png):
+        fig.savefig(out_png, dpi=110, bbox_inches="tight")
+
+    def audit_layout(fig, **kw):
+        # 返回非空，使调用方不会误报"自检通过"
+        return [("info", "未安装 SciPilot 自检工具，跳过布局检查")]
+
+    def print_report(issues):
+        return "  （未安装 SciPilot 自检工具，跳过布局检查——不表示检查通过）"
+
+    def add_panel_labels(fig, style="nature", **kw):
+        print("  [内置回退] 未安装 SciPilot，跳过子图编号 (a)/(b)")
 
 REL = list(range(-7, 8))
 FOCUS5 = ["武汉", "丹东", "贵阳", "阿克苏地区", "乌鲁木齐"]
