@@ -128,7 +128,7 @@ git add policy/ && git commit -m "政策库：核实禁放/禁改限城市名单
 
 **Interfaces**
 - Consumes：Task 1 的名单与格式
-- Produces：20 城的完整政策时间线；`policy.csv` 新增两个结构化字段 `penalty_detention`（0/1，是否可行政拘留）与 `penalty_amount`（罚款上限，元）
+- Produces：20 城的完整政策时间线；`policy.csv` 新增两个结构化字段 `penalty_detention`（0/1，是否可行政拘留）与 `penalty_amount`（罚款上限，元）；并为**所有行**填妥 `scope_level`（1 全市域 / 2 多个区县 / 3 仅中心城区）与配套的 `scope` 文字描述
 
 - [ ] **Step 1：按手册填 20 城**
 
@@ -138,20 +138,25 @@ git add policy/ && git commit -m "政策库：核实禁放/禁改限城市名单
 
 从 `penalty` 自由文本中提取两项：是否可拘留、罚款上限。填不进 `penalty_amount` 的（如"批评教育"）记 0。
 
-- [ ] **Step 3：校验并统计**
+- [ ] **Step 3：每城补一条覆盖样本起点的记录**
+
+`merge_policy.py` 会对"首条记录晚于样本起点（2015-02-11）"的城市告警——那些更早的春节窗口会被静默剔除，等于悄悄改变样本。
+当时若已有规定，补其生效日期；当时若无专门管制，用 `policy_type=1` 补一行。丹东（2014-01-16）、石家庄（2019-01-18）、郑州（2016-01-01）都属此类。
+
+- [ ] **Step 4：校验并统计**
 
 ```bash
 python3 -I scripts/merge_policy.py
 ```
-Expected：20 城均有政策记录；`verified=Y` 的城市数 ≥ 10。
+Expected：20 城均有政策记录；**无"首条记录晚于样本起点"告警**；`verified=Y` 的城市数 ≥ 10。
 
-- [ ] **Step 4：提交**
+- [ ] **Step 5：提交**
 
 ```bash
 git add policy/ && git commit -m "政策库：补齐第一批 20 城政策文本与罚则结构化"
 ```
 
-**验收标准**：20 城每城至少一行、其中至少 10 城 `verified=Y`；`penalty_detention` 与 `penalty_amount` 无空值（无此项填 0）。
+**验收标准**：20 城每城至少一行、其中至少 10 城 `verified=Y`；`penalty_detention`、`penalty_amount`、`scope_level` 三列无空值（无此项填 0）；`merge_policy.py` 无任何告警。
 
 ---
 
