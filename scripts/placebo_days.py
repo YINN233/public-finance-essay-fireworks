@@ -134,6 +134,11 @@ def main():
                     help="样本起始春节年份（默认 2021，避开各省「首次入记录」造成的假切换）")
     ap.add_argument("--to", dest="y1", type=int, default=2026)
     ap.add_argument("--policy", default="policy/policy.csv")
+    ap.add_argument("--var", default="pm25",
+                    choices=["pm25", "pm10", "so2", "no2", "o3_max", "aqi"],
+                    help="结果变量。换成 so2/no2 是**机制判别**：若整窗下移来自工业与"
+                         "燃煤治理，SO2 与 NO2 应同步下降；若来自烟花，初一那天 SO2 应"
+                         "降而 NO2 不该降（NO2 是交通与工业的示踪物）。")
     ap.add_argument("--out", default="data/placebo_days.csv")
     args = ap.parse_args()
     os.chdir(ROOT)
@@ -151,10 +156,10 @@ def main():
     all_city = set()
     with open(os.path.join(ROOT, "data/panel_cityday.csv"), encoding="utf-8-sig") as fh:
         for r in csv.DictReader(fh):
-            if r["pm25"] == "":
+            if r.get(args.var, "") == "":
                 continue
             all_city.add(r["city"])
-            cell[(r["city"], r["cny_year"])][int(r["rel_day"])] = float(r["pm25"])
+            cell[(r["city"], r["cny_year"])][int(r["rel_day"])] = float(r[args.var])
 
     pt = {}
     with open(os.path.join(ROOT, "data/panel_cityyear.csv"), encoding="utf-8-sig") as fh:
