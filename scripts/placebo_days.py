@@ -126,6 +126,10 @@ def main():
     ap.add_argument("--treat-year", type=int, required=True,
                     help="处理生效的春节年份（该年起处理组不再处于禁放）")
     ap.add_argument("--control", default="same", choices=["same", "all"])
+    ap.add_argument("--direction", default="out", choices=["out", "in"],
+                    help="out = 禁放→非禁放（放开）[默认]；in = 非禁放→禁放（收紧）。"
+                         "本项目两个批次方向相反：河南 2023 是 out，山东 2024 是 in。"
+                         "**早先本脚本硬编码为 out，导致山东批次根本找不到处理组。**")
     ap.add_argument("--from", dest="y0", type=int, default=2021,
                     help="样本起始春节年份（默认 2021，避开各省「首次入记录」造成的假切换）")
     ap.add_argument("--to", dest="y1", type=int, default=2026)
@@ -158,12 +162,21 @@ def main():
             pt[(r["city"], r["cny_year"])] = (r["policy_type"] or "").strip()
 
     prev_year = str(args.treat_year - 1)
-    treat = sorted(c for c in members
-                   if pt.get((c, prev_year)) == "3"
-                   and pt.get((c, str(args.treat_year))) not in ("3", ""))
+    if args.direction == "out":
+        # 放开：上年禁放、当年不再是禁放
+        treat = sorted(c for c in members
+                       if pt.get((c, prev_year)) == "3"
+                       and pt.get((c, str(args.treat_year))) not in ("3", ""))
+    else:
+        # 收紧：上年不是禁放（含"无记录"）、当年成为禁放
+        treat = sorted(c for c in members
+                       if pt.get((c, prev_year)) not in ("3",)
+                       and pt.get((c, str(args.treat_year))) == "3")
     if not treat:
-        print("!! %s 在 %d 年找不到「禁放 → 非禁放」的城市"
-              % (args.province, args.treat_year), file=sys.stderr)
+        print("!! %s 在 %d 年找不到「%s」的城市（--direction %s）"
+              % (args.province, args.treat_year,
+                 "禁放 → 非禁放" if args.direction == "out" else "非禁放 → 禁放",
+                 args.direction), file=sys.stderr)
         return 1
     tset = set(treat)
 
