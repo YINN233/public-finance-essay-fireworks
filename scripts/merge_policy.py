@@ -157,7 +157,7 @@ def main():
                 break
         return best
 
-    cols = list(rows[0].keys()) + ["policy_type", "ban", "restrict",
+    cols = list(rows[0].keys()) + ["policy_type", "scope_level", "ban", "restrict",
                                    "agency_cat", "days_since_change",
                                    "tax_instrument"]
     n_matched = 0
@@ -174,7 +174,7 @@ def main():
                 continue
             st = status(r["city"], d)
             if st is None:
-                r.update(policy_type="", ban="", restrict="",
+                r.update(policy_type="", scope_level="", ban="", restrict="",
                          agency_cat="", days_since_change="", tax_instrument="")
             else:
                 eff, pol = st
@@ -182,6 +182,7 @@ def main():
                 cat = agency_cat(pol.get("issuing_agency"))
                 tax = (pol.get("tax_instrument") or "").strip()
                 r.update(policy_type=pt,
+                         scope_level=(pol.get("scope_level") or "").strip(),
                          ban=1 if pt == "3" else 0,
                          restrict=1 if pt == "2" else 0,
                          agency_cat=cat,
