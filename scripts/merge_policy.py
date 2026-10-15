@@ -48,6 +48,13 @@ AGENCY_KEYS = [("生态环境", "eco"), ("环保", "eco"), ("应急", "emergency
 TAX_LABEL = {"0": "无（仅命令控制）", "1": "有地方价格型工具",
              "2": "国家消费税（背景）"}
 
+# 省级政策展开表：policy.csv 里以省为单位的行（如"山西省"）会展开到该省全部地级市。
+# 目前只放山西（2020-10-01 全省"五禁"、2025-12-16 废止）；需要时按同格式补充其他省。
+PROVINCE_CITIES = {
+    "山西": ["太原", "大同", "阳泉", "长治", "晋城", "朔州", "晋中",
+             "运城", "忻州", "临汾", "吕梁"],
+}
+
 
 def norm_city(name, panel_cities):
     name = (name or "").strip()
@@ -93,6 +100,19 @@ def read_policy(path, panel_cities):
             continue
         city = norm_city(raw, panel_cities)
         if city is None:
+            # 省级政策：city_name 写成"山西省"这类，展开到该省全部地级市
+            prov = (raw.replace("省", "").replace("（全省）", "")
+                    .replace("(全省)", "").strip())
+            members = [c for c in PROVINCE_CITIES.get(prov, []) if c in panel_cities]
+            if members:
+                try:
+                    d_prov = date.fromisoformat((r.get("effective_date") or "").strip())
+                except ValueError:
+                    unmatched.add("%s(日期格式: %s)" % (raw, r.get("effective_date")))
+                    continue
+                for c in members:
+                    tl[c].append((d_prov, dict(r, city_name=c)))
+                continue
             unmatched.add(raw)
             continue
         ds = (r.get("effective_date") or "").strip()
