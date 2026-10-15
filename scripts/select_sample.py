@@ -97,6 +97,9 @@ def main():
     ap.add_argument("--data-dir", default="data")
     ap.add_argument("--out", default="data/sample_20cities.csv")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     panel = list(csv.DictReader(
         open(os.path.join(args.data_dir, "panel_cityday.csv"), encoding="utf-8-sig")))

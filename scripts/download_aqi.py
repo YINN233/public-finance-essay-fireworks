@@ -80,6 +80,9 @@ def main():
     ap.add_argument("--force", action="store_true", help="忽略本地已有文件")
     ap.add_argument("--sleep", type=float, default=1.5, help="每次请求间隔秒数")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     before, after = args.window
     days = []

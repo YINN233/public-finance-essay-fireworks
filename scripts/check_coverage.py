@@ -75,6 +75,9 @@ def main():
                     help="某年视为「在场」所需的最少可用天数（窗口共 15 天）")
     ap.add_argument("--out", default="data/coverage_city_year.csv")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     files = sorted(glob.glob(os.path.join(args.raw_dir, "*china_cities_*.csv")))
     if not files:
