@@ -143,6 +143,9 @@ def main():
     ap.add_argument("--panel", default="data/panel_cityday.csv")
     ap.add_argument("--out", default="data/panel_with_policy.csv")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     if not os.path.exists(args.policy):
         print("!! 找不到 %s" % args.policy, file=sys.stderr)

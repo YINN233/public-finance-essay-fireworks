@@ -80,6 +80,9 @@ def main():
                     help="用于核对平衡面板定义；不存在则跳过核对")
     ap.add_argument("--all", action="store_true", help="不限定平衡面板")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     if not os.path.exists(args.inp):
         raise SystemExit("!! 找不到 %s。先运行 scripts/merge_policy.py" % args.inp)

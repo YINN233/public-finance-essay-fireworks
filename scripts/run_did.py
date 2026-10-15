@@ -45,7 +45,54 @@ import argparse
 import csv
 import os
 import statistics as st
+import sys
 from collections import defaultdict
+
+# -I（隔离模式）不会把脚本所在目录放进 sys.path，故显式加入，才能从同目录导入。
+# ⚠️ 必须在 main() 里 chdir 之前算好 ROOT：chdir 之后再对 __file__ 取 abspath，
+# 若调用时给的是相对路径就会解析到错误位置。
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, SCRIPT_DIR)
+from merge_policy import PROVINCE_CITIES   # 复用省级展开表，避免两处维护同一份名单
+
+
+def province_map(policy_path, units):
+    """城市 → 省份。
+
+    优先读 data/city_province.csv（覆盖全部面板城市，由 check_province_map.py 校验）；
+    该文件不存在时退回 policy.csv 的 province 列 + PROVINCE_CITIES 省级展开表——
+    但那只能覆盖十几个城市，会让 --same-province 对其余省份**静默失效**，故仅为兜底。
+    """
+    pv = {}
+    mp = os.path.join(ROOT, "data", "city_province.csv")
+    if os.path.exists(mp):
+        with open(mp, encoding="utf-8-sig") as fh:
+            lines = [ln for ln in fh if not ln.lstrip().startswith("#")]
+        for r in csv.DictReader(lines):
+            c = (r.get("city") or "").strip()
+            p = (r.get("province") or "").strip()
+            if c and p:
+                pv[c] = p
+    else:
+        print("   !! 未找到 data/city_province.csv，退回 policy.csv 的省份列——"
+              "同省对照将只对 policy.csv 覆盖的省份有效", file=sys.stderr)
+    try:
+        with open(policy_path, encoding="utf-8-sig") as fh:
+            rows = list(csv.DictReader(
+                [l for l in fh if not l.lstrip().startswith("#")]))
+    except OSError:
+        rows = []
+    for r in rows:
+        c = (r.get("city_name") or "").strip()
+        p = (r.get("province") or "").strip()
+        if c and p:
+            pv.setdefault(c, p)
+    for prov, cities in PROVINCE_CITIES.items():
+        for c in cities:
+            pv.setdefault(c, prov)
+    return {c: pv[c] for c in units if c in pv}
+
 
 def fnum(s):
     try:
@@ -73,36 +120,50 @@ def build_treat(row, kind):
     raise ValueError(kind)
 
 
-def twfe_cluster(y, d, units, times):
-    """平衡面板双向固定效应：双向去均值求 β，标准误聚类到单位。"""
-    n = len(y)
-    gm_y, gm_d = st.mean(y), st.mean(d)
-    uy, ud = defaultdict(list), defaultdict(list)
-    ty, td = defaultdict(list), defaultdict(list)
-    for i in range(n):
-        uy[units[i]].append(y[i]); ud[units[i]].append(d[i])
-        ty[times[i]].append(y[i]); td[times[i]].append(d[i])
-    my = {k: st.mean(v) for k, v in uy.items()}
-    md = {k: st.mean(v) for k, v in ud.items()}
-    ny = {k: st.mean(v) for k, v in ty.items()}
-    nd = {k: st.mean(v) for k, v in td.items()}
-    yd = [y[i] - my[units[i]] - ny[times[i]] + gm_y for i in range(n)]
-    dd = [d[i] - md[units[i]] - nd[times[i]] + gm_d for i in range(n)]
+def demean(vals, groups, tol=1e-12, maxit=5000):
+    """交替投影（Frisch–Waugh–Lovell）去掉多组固定效应。
+
+    groups 是若干「id 向量」，每个元素给出该观测属于哪一组。多重固定效应没有闭式解，
+    但交替"组内去均值"会收敛到正确的残差（两组时对平衡面板恰好一步即精确）。
+    """
+    n = len(vals)
+    x = list(vals)
+    for _ in range(maxit):
+        prev = x
+        x = list(prev)
+        for g in groups:
+            s, c = defaultdict(float), defaultdict(int)
+            for i in range(n):
+                s[g[i]] += x[i]
+                c[g[i]] += 1
+            m = {k: s[k] / c[k] for k in s}
+            x = [x[i] - m[g[i]] for i in range(n)]
+        if max(abs(x[i] - prev[i]) for i in range(n)) < tol:
+            break
+    return x
+
+
+def fe_cluster(y, d, groups, unit):
+    """多组固定效应回归 y ~ d，标准误聚类到 unit。返回 (beta, se, 聚类数)。
+
+    用部分消去（FWL）而不是构造虚拟变量矩阵：本脚本其余部分只用标准库，
+    引入 numpy 会把依赖带到不必要的地方。
+    """
+    yd = demean(y, groups)
+    dd = demean(d, groups)
     var = sum(v * v for v in dd)
     if var == 0:
         return None, None, 0
-    beta = sum(yd[i] * dd[i] for i in range(n)) / var
-    resid = [yd[i] - beta * dd[i] for i in range(n)]
-    # 聚类稳健方差（单位层面）
+    beta = sum(yd[i] * dd[i] for i in range(len(y))) / var
+    resid = [yd[i] - beta * dd[i] for i in range(len(y))]
     g = defaultdict(float)
-    for i in range(n):
-        g[units[i]] += dd[i] * resid[i]
+    for i in range(len(y)):
+        g[unit[i]] += dd[i] * resid[i]
     G = len(g)
     meat = sum(v * v for v in g.values())
     se = None
     if G > 1 and var > 0:
-        se = (meat / (var ** 2)) * (G / (G - 1))
-        se = se ** 0.5
+        se = ((meat / (var ** 2)) * (G / (G - 1))) ** 0.5
     return beta, se, G
 
 
@@ -113,10 +174,26 @@ def main():
     ap.add_argument("--treat", default="ban",
                     choices=["ban", "full_ban", "scope1"])
     ap.add_argument("--outcome", default="pm25_d1",
-                    choices=["pm25_d1", "pm25_win", "spike_increment"])
+                    choices=["pm25_d1", "pm25_win", "spike_increment", "pm25_base"],
+                    help="pm25_base（除夕前 7—2 日）是**安慰剂结果变量**：燃放管制不该"
+                         "改变年前基线，若它在切换当期也出现大系数，说明估计量在捡拾"
+                         "城市自身的趋势，而非政策效应")
     ap.add_argument("--min-year", type=int, default=0,
                     help="只用该年及以后的观测（默认自动取处理城市首条记录的年份）")
+    ap.add_argument("--policy", default="policy/policy.csv",
+                    help="用于建立城市→省份映射（同省对照需要）")
+    ap.add_argument("--same-province", action="store_true",
+                    help="对照组只取与处理城市同省的未变动城市。可吸掉区域共同冲击，"
+                         "但要求该省有未变动的对照城市")
+    ap.add_argument("--prov-year-fe", action="store_true",
+                    help="TWFE 用「城市 + 省份×年份」固定效应代替「城市 + 年份」。"
+                         "省份×年份固定效应是 --same-province 在回归里的对应物，"
+                         "能吸掉各省自己的年际波动（安慰剂检验显示这一项很大）。"
+                         "注意：省级统一政策的城市在此设定下**无对照可用**，会被吸收掉")
     args = ap.parse_args()
+    # 默认参数是相对路径；从项目目录之外运行会解析到错误位置，甚至抛 FileNotFoundError
+    # 而报错信息看不出是路径问题。统一以仓库根目录为基准；绝对路径不受影响。
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     raw = list(csv.DictReader(open(args.inp, encoding="utf-8-sig")))
     # 构造处理变量；无法判定的城-年剔除
@@ -168,6 +245,23 @@ def main():
 
     # 逐期切换者
     idx = {(r["city"], r["_year"]): r for r in recs}
+    prov = province_map(args.policy, units)
+    n_prov = len({prov[c] for c in units if c in prov})
+    print("省份映射覆盖 %d 城（%d 个省/市）；同省对照模式：%s"
+          % (len(prov), n_prov, "开" if args.same_province else "关"))
+
+    def ctrl_change(city, t0, t1, stay):
+        """该城市的对照组平均变化。--same-province 时只取同省未变动城市。"""
+        dy = lambda c: idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"]
+        if args.same_province:
+            pv_ = prov.get(city)
+            pool = [s for s in stay if prov.get(s) == pv_] if pv_ else []
+            if not pool:
+                return None
+        else:
+            pool = stay
+        return st.mean([dy(c) for c in pool]) if pool else None
+
     events = []
     for t0, t1 in zip(years, years[1:]):
         ins = [c for c in units if idx[(c, t0)]["_d"] == 0 and idx[(c, t1)]["_d"] == 1]
@@ -175,17 +269,27 @@ def main():
         stay = [c for c in units if idx[(c, t0)]["_d"] == idx[(c, t1)]["_d"]]
         if not ins and not outs:
             continue
-        def dy(c):
-            return idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"]
+        dy = lambda c: idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"]
+
+        def eff(group, sign):
+            """逐城与其对照组比，再平均；返回 (估计, 用上的城市数)。"""
+            ests = []
+            for c in group:
+                cb = ctrl_change(c, t0, t1, stay)
+                if cb is not None:
+                    ests.append(sign * (dy(c) - cb))
+            return (st.mean(ests) if ests else None, len(ests))
+
         base = st.mean([dy(c) for c in stay]) if stay else 0.0
-        e_in = (st.mean([dy(c) for c in ins]) - base) if ins else None
-        e_out = (-(st.mean([dy(c) for c in outs]) - base)) if outs else None
-        events.append({"period": "%d→%d" % (t0, t1), "n_in": len(ins), "n_out": len(outs),
+        e_in, n_iu = eff(ins, +1)
+        e_out, n_ou = eff(outs, -1)
+        events.append({"period": "%d→%d" % (t0, t1), "n_in": n_iu, "n_out": n_ou,
                        "n_stay": len(stay), "ctrl_change": round(base, 2),
                        "est_in": round(e_in, 2) if e_in is not None else "",
                        "est_out": round(e_out, 2) if e_out is not None else ""})
-        print("\n[%d→%d] 进入处理 %d 城，退出处理 %d 城，本期未变动 %d 城"
-              % (t0, t1, len(ins), len(outs), len(stay)))
+        print("\n[%d→%d] 进入处理 %d 城（可用 %d），退出处理 %d 城（可用 %d），"
+              "本期未变动 %d 城"
+              % (t0, t1, len(ins), n_iu, len(outs), n_ou, len(stay)))
         print("   对照组的平均变化 %+.2f；进入处理的效应 %s；退出处理的效应 %s"
               % (base,
                  "%+.2f" % e_in if e_in is not None else "—",
@@ -198,23 +302,56 @@ def main():
     # ---------- 事件路径：平行趋势的安慰剂证据 ----------
     # 把"在窗口内发生过切换"的城市与"始终未切换"的城市逐期对比。切换之前的期对
     # 若已显示系统性差异，平行趋势就不成立；那时主估计不可信。
-    switchers = set()
+    # ⚠️ 必须**按批次分开**画路径。把不同切换年份的城市混成一组，事件前后的路径会
+    # 互相抵消——山西的 2026 效应会被河南 2023 已切换后的走势冲淡。
+    # 批次 = 同一相对期发生切换的城市集合；方向（进/退处理）也要记下来，否则读路径
+    # 的人会把"退出处理"的符号读反——本项目的两个批次**都是退出处理**（禁改限）。
+    cohorts = defaultdict(set)
+    cohort_dir = defaultdict(set)
     for t0, t1 in zip(years, years[1:]):
         for c in units:
-            if idx[(c, t0)]["_d"] != idx[(c, t1)]["_d"]:
-                switchers.add(c)
+            a, b = idx[(c, t0)]["_d"], idx[(c, t1)]["_d"]
+            if a != b:
+                cohorts[t1].add(c)
+                cohort_dir[t1].add("进" if b == 1 else "退")
+    switchers = set().union(*cohorts.values()) if cohorts else set()
     never = [c for c in units if c not in switchers]
-    print("\n=== 事件路径：最终切换城市（%d 个）vs 始终未切换城市（%d 个）==="
-          % (len(switchers), len(never)))
-    print("逐期相对变化（正值 = 切换城市比其他城市涨得多）")
-    for t0, t1 in zip(years, years[1:]):
-        if not switchers or not never:
-            break
-        a = st.mean([idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"] for c in switchers])
-        b = st.mean([idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"] for c in never])
-        has_ev = any(idx[(c, t0)]["_d"] != idx[(c, t1)]["_d"] for c in units)
-        print("  %d→%d  %+7.2f   %s" % (t0, t1, a - b,
-              "← 含切换事件" if has_ev else "（切换前，安慰剂）"))
+    dy_all = lambda c, t0, t1: idx[(c, t1)]["_y"] - idx[(c, t0)]["_y"]
+    print("\n=== 按批次的事件路径（相对切换年为 0；切换前各期就是平行趋势的安慰剂）===")
+    print("  路径是**原始差**（处理组变化 − 对照组变化），未按处理方向翻符号。")
+    print("  因此：批次为「退出处理」时，正值 = 放开后相对对照**上升**（即禁令原本在压低浓度）；")
+    print("  批次为「进入处理」时含义相反。当期系数与上文 est_in/est_out 差一个负号。")
+    for g in sorted(cohorts):
+        grp = sorted(cohorts[g])
+        dirn = "/".join(sorted(cohort_dir[g]))
+        print("\n批次 %d（%d 城，方向：%s处理）：%s"
+              % (g, len(grp), dirn, "、".join(grp[:12])))
+        for t0, t1 in zip(years, years[1:]):
+            ests = []
+            for c in grp:
+                cb = ctrl_change(c, t0, t1, never)
+                if cb is not None:
+                    ests.append(dy_all(c, t0, t1) - cb)
+            if not ests:
+                continue
+            rel = t1 - g
+            tag = "← 切换当期" if rel == 0 else ("切换前，安慰剂" if rel < 0 else "切换后")
+            print("  相对期 %+d（%d→%d）  %+7.2f   %s"
+                  % (rel, t0, t1, st.mean(ests), tag))
+        if not any(ctrl_change(c, g - 1, g, never) is not None for c in grp) and g - 1 in years:
+            print("   （该批次在本对照口径下无可用对照城市，故无路径——"
+                  "若为同省对照模式，通常因该省城市全在处理组内）")
+            continue
+        # 逐城贡献：结论是否被单一城市驱动，必须看清楚
+        per = []
+        for c in grp:
+            cb = ctrl_change(c, g - 1, g, never)
+            if cb is not None:
+                per.append((dy_all(c, g - 1, g) - cb, c))
+        if per:
+            per.sort()
+            print("   切换当期逐城（与对照之差）："
+                  + "；".join("%s %+.1f" % (c, v) for v, c in per))
 
     # 加权汇总（按切换单位数）
     num = den = 0.0
@@ -231,10 +368,24 @@ def main():
     # TWFE 对照
     y = [r["_y"] for r in recs]; d = [r["_d"] for r in recs]
     us = [r["city"] for r in recs]; ts = [r["_year"] for r in recs]
-    beta, se, G = twfe_cluster(y, d, us, ts)
-    print("\nTWFE 对照：β = %s，聚类标准误 = %s（聚类数 %d）"
-          % ("%+.2f" % beta if beta is not None else "—",
+    if args.prov_year_fe:
+        noprov = [c for c in units if c not in prov]
+        pt = [prov.get(r["city"], "_缺省") + "|" + str(r["_year"]) for r in recs]
+        beta, se, G = fe_cluster(y, d, [us, pt], us)
+        spec = "城市 + 省份×年份"
+        if noprov:
+            print("\n   ⚠️ %d 个城市没有省份归属，其省份×年份组记为「_缺省」，"
+                  "等于把它们放在同一个伪省份里——请先补 data/city_province.csv"
+                  % len(noprov))
+    else:
+        beta, se, G = fe_cluster(y, d, [us, ts], us)
+        spec = "城市 + 年份"
+    print("\nTWFE 对照（固定效应：%s）：β = %s，聚类标准误 = %s（聚类数 %d）"
+          % (spec,
+             "%+.2f" % beta if beta is not None else "—",
              "%.2f" % se if se else "—", G))
+    print("   注：本行**不受 --same-province 影响**，它始终用全部样本；"
+          "换设定请用 --prov-year-fe。")
     print("   （TWFE 在交错实施且效应异质时有负权重问题，此处仅作对照，不作主结果）")
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
