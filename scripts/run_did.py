@@ -144,27 +144,37 @@ def demean(vals, groups, tol=1e-12, maxit=5000):
 
 
 def fe_cluster(y, d, groups, unit):
-    """多组固定效应回归 y ~ d，标准误聚类到 unit。返回 (beta, se, 聚类数)。
+    """多组固定效应回归 y ~ d，标准误聚类到 unit。
+
+    返回 (beta, se, 聚类数, 有效聚类数)。
+    **有效聚类数 = 残差化处理变量非零的单位数**——在"城市 + 省份×年份"设定下，
+    未处理省份的整省变异被省份×年份虚拟变量吸收，其残差化处理变量恒为 0，
+    对 β 和 meat 的贡献都是 0。此时报出 306 会严重虚高（实测只有 17 个）。
 
     用部分消去（FWL）而不是构造虚拟变量矩阵：本脚本其余部分只用标准库，
     引入 numpy 会把依赖带到不必要的地方。
+
+    ⚠️ 标准误口径：这里只乘 CR1 的 G/(G-1)。Stata/`reghdfe` 的 `vce(cluster)`
+    默认还要再乘 (N-1)/(N-K)（K 含被吸收的固定效应），实测会大 10%–17%。
+    两种约定下的数字都应报告，不要只给一个。
     """
     yd = demean(y, groups)
     dd = demean(d, groups)
     var = sum(v * v for v in dd)
     if var == 0:
-        return None, None, 0
+        return None, None, 0, 0
     beta = sum(yd[i] * dd[i] for i in range(len(y))) / var
     resid = [yd[i] - beta * dd[i] for i in range(len(y))]
     g = defaultdict(float)
     for i in range(len(y)):
         g[unit[i]] += dd[i] * resid[i]
     G = len(g)
+    n_eff = len({unit[i] for i in range(len(y)) if abs(dd[i]) > 1e-12})
     meat = sum(v * v for v in g.values())
     se = None
     if G > 1 and var > 0:
         se = ((meat / (var ** 2)) * (G / (G - 1))) ** 0.5
-    return beta, se, G
+    return beta, se, G, n_eff
 
 
 def main():
@@ -174,12 +184,15 @@ def main():
     ap.add_argument("--treat", default="ban",
                     choices=["ban", "full_ban", "scope1"])
     ap.add_argument("--outcome", default="pm25_d1",
-                    choices=["pm25_d1", "pm25_win", "spike_increment", "pm25_base"],
+                    choices=["pm25_d1", "pm25_win", "spike_increment", "pm25_base", "spike_ratio"],
                     help="pm25_base（除夕前 7—2 日）是**安慰剂结果变量**：燃放管制不该"
                          "改变年前基线，若它在切换当期也出现大系数，说明估计量在捡拾"
                          "城市自身的趋势，而非政策效应")
     ap.add_argument("--min-year", type=int, default=0,
                     help="只用该年及以后的观测（默认自动取处理城市首条记录的年份）")
+    ap.add_argument("--no-truncate", action="store_true",
+                    help="关闭窗口截断。首记录晚于样本起点的城市会出现假切换，"
+                         "**仅供诊断**，不要用它报告结果")
     ap.add_argument("--policy", default="policy/policy.csv",
                     help="用于建立城市→省份映射（同省对照需要）")
     ap.add_argument("--same-province", action="store_true",
@@ -216,17 +229,30 @@ def main():
             first_year[r["city"]] = min(first_year[r["city"]], int(r["cny_year"]))
     # 窗口起点：取"首条记录就是禁放（type=3）"的城市中**最晚**的首记录年份。
     # 理由——首记录为禁放的城市，若窗口早于其首记录，前面被当成 0（无记录）就会造出
-    # 一次假的 0→1 切换（山西各市会假切换于 2021）。首记录本就是限放或无记录的城市
-    # 不受此影响（它们在各年都是非切换者）。
+    # 一次假的 0→1 切换（河南各市会假切换于 2020、山西各市于 2021）。
+    #
+    # ⚠️ 已知代价（两次独立复核都点到）：这是**全局**截断，由山西的省级记录起始年
+    #    （2021）决定，会让河南白丢一年前置期。更正确的做法是**按城市各自截断**，
+    #    但那要求平衡筛查与 DCDH 循环都改成"按各城可用年份"，且恢复出来的
+    #    2020 前置期本身被新冠污染（2020 春节初一 = 2020-01-25，武汉封城后第 2 天），
+    #    故暂不实现，列为待办。用 --no-truncate 可关闭截断（会引入假切换，仅供诊断）。
     first_ban = {}
     for r in raw:
         if (r.get("policy_type") or "").strip() == "3":
             c = r["city"]
             first_ban[c] = min(first_ban.get(c, 10 ** 9), int(r["cny_year"]))
-    min_year = args.min_year or (max(first_ban.values()) if first_ban else 0)
+    if args.no_truncate:
+        min_year = 0
+        print("⚠️ --no-truncate：已关闭窗口截断。首记录晚于样本起点的城市会出现"
+              "「首次入记录」被误当 0→1 假切换，结果仅供诊断。")
+    else:
+        min_year = args.min_year or (max(first_ban.values()) if first_ban else 0)
     recs = [r for r in recs if r["_year"] >= min_year]
-    print("窗口起点 %d（= 政策城市中首条记录最晚的年份，避免把「首次入记录」误当切换）"
-          % min_year)
+    drv = sorted(c for c, y in first_ban.items() if y == min_year)
+    print("窗口起点 %d（避免把「首次入记录」误当切换）%s"
+          % (min_year,
+             "；该值由以下城市的首条禁放记录年决定：%s"
+             % "、".join(drv[:11]) if drv and not args.no_truncate else ""))
 
     # 平衡筛查：剔除年份不全的城市
     bycity = defaultdict(dict)
@@ -280,20 +306,32 @@ def main():
                     ests.append(sign * (dy(c) - cb))
             return (st.mean(ests) if ests else None, len(ests))
 
-        base = st.mean([dy(c) for c in stay]) if stay else 0.0
+        # 对照组口径的"平均变化"必须与 eff() **实际用的**对照一致。
+        # 早先这里恒用全体未变动城市，导致同一段输出里"对照均值"与"效应"对不上账
+        # （同省对照模式下 17 城的设计报出全体 301 城的均值）——由代码复核发现。
+        if args.same_province:
+            used = [ctrl_change(c, t0, t1, stay) for c in (ins + outs)]
+            used = [v for v in used if v is not None]
+            base = st.mean(used) if used else None
+            base_note = "同省对照（%d 个切换城的同省对照均值之平均）" % len(used)
+        else:
+            base = st.mean([dy(c) for c in stay]) if stay else None
+            base_note = "全体未变动城市（%d 城）" % len(stay)
         e_in, n_iu = eff(ins, +1)
         e_out, n_ou = eff(outs, -1)
         events.append({"period": "%d→%d" % (t0, t1), "n_in": n_iu, "n_out": n_ou,
-                       "n_stay": len(stay), "ctrl_change": round(base, 2),
+                       "n_stay": len(stay),
+                       "ctrl_change": round(base, 2) if base is not None else "",
                        "est_in": round(e_in, 2) if e_in is not None else "",
                        "est_out": round(e_out, 2) if e_out is not None else ""})
         print("\n[%d→%d] 进入处理 %d 城（可用 %d），退出处理 %d 城（可用 %d），"
               "本期未变动 %d 城"
               % (t0, t1, len(ins), n_iu, len(outs), n_ou, len(stay)))
-        print("   对照组的平均变化 %+.2f；进入处理的效应 %s；退出处理的效应 %s"
-              % (base,
+        print("   对照组平均变化 %s；进入处理的效应 %s；退出处理的效应 %s"
+              % ("%+.2f" % base if base is not None else "—",
                  "%+.2f" % e_in if e_in is not None else "—",
                  "%+.2f" % e_out if e_out is not None else "—"))
+        print("   （对照口径：%s）" % base_note)
         if ins:
             print("   进入的城市：%s" % "、".join(ins[:12]))
         if outs:
@@ -371,19 +409,27 @@ def main():
     if args.prov_year_fe:
         noprov = [c for c in units if c not in prov]
         pt = [prov.get(r["city"], "_缺省") + "|" + str(r["_year"]) for r in recs]
-        beta, se, G = fe_cluster(y, d, [us, pt], us)
+        beta, se, G, n_eff = fe_cluster(y, d, [us, pt], us)
         spec = "城市 + 省份×年份"
         if noprov:
             print("\n   ⚠️ %d 个城市没有省份归属，其省份×年份组记为「_缺省」，"
                   "等于把它们放在同一个伪省份里——请先补 data/city_province.csv"
                   % len(noprov))
     else:
-        beta, se, G = fe_cluster(y, d, [us, ts], us)
+        beta, se, G, n_eff = fe_cluster(y, d, [us, ts], us)
         spec = "城市 + 年份"
-    print("\nTWFE 对照（固定效应：%s）：β = %s，聚类标准误 = %s（聚类数 %d）"
-          % (spec,
-             "%+.2f" % beta if beta is not None else "—",
-             "%.2f" % se if se else "—", G))
+    print("\nTWFE 对照（固定效应：%s）：β = %s，聚类标准误 = %s" % (
+        spec, "%+.2f" % beta if beta is not None else "—",
+        "%.2f" % se if se else "—"))
+    print("   聚类数 %d；**有效聚类数 %d**（残差化处理变量非零的城市数）"
+          % (G, n_eff))
+    if n_eff < G * 0.5:
+        print("   ⚠️ 有效聚类数远小于名义聚类数：该设定下 β 只由那 %d 个城市识别，"
+              "其余 %d 城的残差化处理变量恒为 0，对 β 与标准误的贡献都是 0。"
+              "按 G=%d 校正标准误会偏小（实测约小 3%%）。"
+              % (n_eff, G - n_eff, n_eff))
+    print("   ⚠️ 标准误口径：此处只乘 CR1 的 G/(G-1)。若按 Stata/`reghdfe` 默认再乘"
+          " (N-1)/(N-K)，(N=%d) 会更大 10%–17%%。两种约定都要报。" % len(y))
     print("   注：本行**不受 --same-province 影响**，它始终用全部样本；"
           "换设定请用 --prov-year-fe。")
     print("   （TWFE 在交错实施且效应异质时有负权重问题，此处仅作对照，不作主结果）")

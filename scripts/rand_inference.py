@@ -96,8 +96,11 @@ def main():
     else:
         t0, t1 = s0, s1
     for y in (s0, s1, t0, t1):
-        if (cities[0], y) not in idx:
-            print("!! 面板缺少 %d 年，无法比较" % y, file=sys.stderr)
+        want = [c for c in cities if (c, y) not in idx]
+        if want:
+            # 早先只检查 cities[0]，其余城市缺年会在下游抛 KeyError 而非友好报错
+            print("!! 面板缺少 %d 年数据的有 %d 个城市：%s"
+                  % (y, len(want), "、".join(want[:8])), file=sys.stderr)
             return 1
 
     def ptype(c, y):
