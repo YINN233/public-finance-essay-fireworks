@@ -6,6 +6,8 @@ data/*
 # 例外：data/samples/ 下保留两个单日样例，便于组员了解文件格式
 !data/samples
 !data/samples/*
+# 例外：手工采集、脚本无法重新生成的文件必须入库
+!data/enforcement.csv
 
 # ============ Python ============
 __pycache__/
