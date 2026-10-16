@@ -44,9 +44,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 上面说的三个数量级的不确定性。
 #   grade: 一手 / 实测 / 论文 / 标准方法 / 自设假设
 P = {
-    "EF": dict(lo=0.200, hi=0.325, unit="kg PM2.5 / kg 烟花", grade="实测",
-               src="Keller & Schragen (2021) 测量舱实测 200–325 g/kg；"
-                   "经 ESSD 2022 (essd-14-4757) 附表 S4 汇总引用"),
+    "EF": dict(lo=0.134, hi=0.281, unit="kg PM2.5 / kg 净火药量(NEC)", grade="实测",
+               src="Keller & Schragen (2021) Propellants Explosives Pyrotechnics 46(5):825–842："
+                   "PM2.5 逐条 134–281 g/kg NEC、**均值 200**；PM10 均值 253（区间 200–325）。"
+                   "⚠️ 分母是**净火药量 NEC**，不是烟花总重——与 P（元/kg 商品）不同单位，"
+                   "故必须再乘 NEC_SHARE（见下）。早先本文件把 PM10 的区间错记成 PM2.5，已更正"),
+    # 单位换算：烟花商品里净火药（NEC）的质量占比。**自设假设，无来源。**
+    "NEC_SHARE": dict(lo=0.15, hi=0.45, unit="kg NEC / kg 商品", grade="自设假设",
+                      src="无来源。烟花商品含纸张、泥底、引线、包装，净火药占比远小于 1。"
+                          "区间为拍定，用于暴露该换算对结论的影响——**这一项与 DK 同为本校准"
+                          "最弱的两环**"),
     "P":  dict(lo=16.0, hi=20.0, unit="元 / kg 烟花", grade="一手",
                src="海关 HS 36041000「烟花、爆竹」出口单价：2024 年 408,396 吨 / "
                    "11.62 亿美元 = 0.28 万美元/吨；2020–2025 在 2,362–2,800 美元/吨，"
@@ -75,18 +82,18 @@ DAILY_MORT = 0.0076 / 365.0
 MORT_GRADE = "一手（国家统计局粗死亡率量级）"
 
 
-def routeA(ef, p, c):
-    """税 ÷ 避免治理成本。两者同为「每公斤烟花」。"""
+def routeA(ef, nec, p, c):
+    """税 ÷ 避免治理成本。两者同为「每公斤商品」。"""
     tax = 0.15 * p
-    bench = ef * c
+    bench = ef * nec * c
     return tax, bench
 
 
-def routeB(ef, p, dk, dr_pct, vsl):
+def routeB(ef, nec, p, dk, dr_pct, vsl):
     """税 ÷ 健康损害。损害按「那一天」的短期暴露计——**不得套用全年长期系数**。"""
     tax = 0.15 * p
     deaths_per_kg = dk * (dr_pct / 100.0 / 10.0) * DAILY_MORT
-    bench = ef * deaths_per_kg * vsl
+    bench = ef * nec * deaths_per_kg * vsl
     return tax, bench
 
 
@@ -125,7 +132,7 @@ def main():
 
     out = []
     if args.route in ("A", "both"):
-        r, tx, bn = sweep(routeA, ["EF", "P", "C_A"])
+        r, tx, bn = sweep(routeA, ["EF", "NEC_SHARE", "P", "C_A"])
         print("\n" + "=" * 78)
         print("路线 A：税 ÷ 避免治理成本   （同以「每公斤烟花」为分母）")
         print("=" * 78)
@@ -141,7 +148,7 @@ def main():
                     "%d%%" % (100.0 * cross / len(r))))
 
     if args.route in ("B", "both"):
-        r, tx, bn = sweep(routeB, ["EF", "P", "DK", "DR", "VSL"], n=5)
+        r, tx, bn = sweep(routeB, ["EF", "NEC_SHARE", "P", "DK", "DR", "VSL"], n=4)
         print("\n" + "=" * 78)
         print("路线 B：税 ÷ 健康损害（短期暴露，只计那一天）")
         print("=" * 78)
@@ -159,21 +166,20 @@ def main():
     print("\n" + "=" * 78)
     print("结论（须写进论文的限定）")
     print("=" * 78)
-    print("  1. **两条路线的可用程度不同，不要一锅端。**")
-    print("     路线 A 的定性方向不稳（有相当比例的组合给出「税 ≥ 基准」），**且概念不适用**：")
-    print("     单位治理成本预设点源可捕集（烟囱、除尘器），而烟花 PM2.5 是弥散释放、")
-    print("     无从捕集，唯一的『减排』是不烧。**所以 A 不是『更保守的估计』，是口径错配。**")
-    print("     路线 B 的定性方向**稳**（全部组合下税都低于基准），不稳的是倍数。")
-    print("  2. **可写进论文的句子**（路线 B，全部组合下成立）：")
-    print("     「在所有参数组合下，现行消费税都低于以健康损害计的边际外部性；")
-    print("       中位组合下税只覆盖其 %.2f%%；即使把每个参数都取到最保守的一端，"
-          % (100 * st.median(r)))
-    print("       也只覆盖 %.0f%%。**定性判断稳，具体倍数不稳——故不报单点。**」"
-          % (100 * max(r)))
-    print("     主导不确定性的是 DK（扩散假设，自设）与 EF，不是剂量反应或 VSL。")
-    print("  3. **因此主线论证不能靠这个比值。**「已有的价格工具没有被校准到边际损害」")
-    print("     应当由**工具结构上的分辨率差异**支撑（见 docs/论文-工具选择证据.md 的")
-    print("     对照表：全国统一/从价/生产环节 vs 市级/逐时段），本校准只作辅助。")
+    print("  **两条路线的符号都不稳，本校准给不出可引用的结论——连方向都给不出。**")
+    print("  1. 路线 A：概念本身不适用（单位治理成本预设点源可捕集，而烟花 PM2.5 是弥散")
+    print("     释放、无从捕集），且符号不稳。**不采用。**")
+    print("  2. 路线 B：符号同样不稳——有相当比例的组合给出「税 ≥ 基准」。")
+    print("     不稳的根源是**两个自设参数**：DK（扩散假设）与 NEC_SHARE（净火药占比），")
+    print("     各自跨约一个数量级，合起来足以让基准移动两个数量级、从而跨越 1。")
+    print("  3. 参数中**唯一有可靠来源**的是 EF（实测）、P（海关）、DR（Meta 分析）、")
+    print("     VSL（Meta 分析）——但它们恰恰不是主导项。**主导项没有来源。**")
+    print("  ⇒ **本校准不能作为论据。**「已有的价格工具没有被校准到边际损害」这一判断，")
+    print("     应由**工具结构上的分辨率差异**支撑（见 docs/论文-工具选择证据.md 的")
+    print("     对照表：全国统一／从价／生产环节 vs 市级／逐时段），校准只作辅助说明，")
+    print("     并如实写出「算了，但给不出稳健结论」。")
+    print("  ⚠️ 可引用的只有一条**中位数**，且必须同时给出区间：中位组合下税覆盖基准的")
+    print("     百分之几（见上表）；但区间跨三个数量级，故**单看中位数会误导**。")
 
     if args.write:
         p = os.path.join(ROOT, "docs", "校准结果.md")
