@@ -147,7 +147,7 @@ def fig1(rows, bal):
         x, m, se, ns = series(rows, bal, "pm25", lambda y: y0 <= y <= y1)
         ax.fill_between(x, m - se, m + se, color=color, alpha=0.18, lw=0)
         ax.plot(x, m, color=color, marker=mk, ls=ls, ms=4, lw=1.5, label=lab)
-        # 直接在线端标注，避免图例遮挡峰值（此前图例压住了 2015–2019 的峰）
+        # 直接在线端标注，避免图例遮挡峰值
         ax.annotate(f"{lab}\n(n={ns[0]}/pt)", (x[-1] + 0.25, m[-1]), color=color,
                     fontsize=6.2, va="center", ha="left", annotation_clip=False)
         ymax = max(ymax, float((m + se).max()))

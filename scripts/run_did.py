@@ -306,9 +306,8 @@ def main():
                     ests.append(sign * (dy(c) - cb))
             return (st.mean(ests) if ests else None, len(ests))
 
-        # 对照组口径的"平均变化"必须与 eff() **实际用的**对照一致。
-        # 早先这里恒用全体未变动城市，导致同一段输出里"对照均值"与"效应"对不上账
-        # （同省对照模式下 17 城的设计报出全体 301 城的均值）——由代码复核发现。
+        # 对照组口径的平均变化必须与 eff() 实际使用的对照同口径，否则同一段输出里
+        # "对照均值"与"效应"对不上账（同省模式下会报出全体城市的均值）。
         if args.same_province:
             used = [ctrl_change(c, t0, t1, stay) for c in (ins + outs)]
             used = [v for v in used if v is not None]

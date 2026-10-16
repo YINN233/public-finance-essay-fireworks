@@ -129,7 +129,7 @@ def main():
     ap.add_argument("--direction", default="out", choices=["out", "in"],
                     help="out = 禁放→非禁放（放开）[默认]；in = 非禁放→禁放（收紧）。"
                          "本项目两个批次方向相反：河南 2023 是 out，山东 2024 是 in。"
-                         "**早先本脚本硬编码为 out，导致山东批次根本找不到处理组。**")
+                         "收紧方向必须显式指定，否则 in 向批次会报「找不到处理组」。")
     ap.add_argument("--from", dest="y0", type=int, default=2021,
                     help="样本起始春节年份（默认 2021，避开各省「首次入记录」造成的假切换）")
     ap.add_argument("--to", dest="y1", type=int, default=2026)
