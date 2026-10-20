@@ -6,9 +6,9 @@
 
 图~\ref{fig:event} 给出春节窗口内日均 \pmm{2.5} 的事件研究剖面。作图使用 308 城的作图画板，\textbf{只取 2015—2019 与 2022—2026 两个年代}；每个年代每个相对日的样本量约为 $1{,}540$（308 城 $\times$ 5 年）。\textbf{注意：全样本的 63,515 个城市-日属于 389 城面板，不用于这张图。}峰值出现在\textbf{正月初一}，随后快速回落。图~\ref{fig:event}(b) 给出四种污染物的指数化剖面（以 \texttt{rel\_day} $=-7$ 为 100）。
 
-\begin{figure}[H]
+\begin{figure}[tbp]
 \centering
-\includegraphics[width=\textwidth]{fig1_event_study.pdf}
+\includegraphics[width=0.95\textwidth]{fig1_event_study.pdf}
 \caption{春节窗口的事件研究剖面。(a) 各城市在除夕前 7 日至后 7 日的日均 \pmm{2.5}，按 2015—2019 与 2022—2026 两个年代分别取均值，阴影为 $\pm 1$ 标准误；(b) 四种污染物在同一窗口内的指数化剖面，以除夕前 7 日 $=100$。竖虚线标出正月初一。}
 \label{fig:event}
 \end{figure}
@@ -32,19 +32,17 @@
 
 平衡面板上，尖峰增量的分位数为：$p_{10}=-21.7$、$p_{25}=1.6$、$p_{50}=28.1$、$p_{75}=71.8$、$p_{90}=126.3$、$p_{99}=273.8$，最大值 440.9。\textbf{23.3\% 的城市-年尖峰增量为负}，即当年初一反而比节前基线更干净；15.7\% 的城市-年增量超过 100 \ugm。
 
-均值与中位数的差距本身就说明问题：\textbf{分布是右偏的}。少数城市有巨尖峰，多数城市的中位增量不到 30 \ugm。这一点在后文有直接后果——任何假设“统一处理效应”的设计都会在量级上先出问题。
+均值远高于中位数：\textbf{分布右偏}，多数城市的中位增量不到 30 \ugm。任何假设“统一处理效应”的设计都会在量级上先出问题。
 
 \subsection{城际异质性}
 
 图~\ref{fig:hetero} 把 308 个城市的基线浓度与尖峰幅度作图。两个事实值得记录。
 
-第一，\textbf{基线越高，相对倍数越低}（图~\ref{fig:hetero}a）。这其中有相当部分是分母效应：以基线为分母时，低基线城市天然倍数大。\textbf{因此相对倍数不适合作为跨城比较的主口径。}
+第一，\textbf{基线越高，相对倍数越低}（图~\ref{fig:hetero}a），其中有相当部分是分母效应，因此\textbf{相对倍数不适合作为跨城比较的主口径}。第二，\textbf{绝对增量的城际差异极大}（图~\ref{fig:hetero}b）：上海 12 年平均为 $-2.5$ \ugm，但逐年值从 $-68.0$（2020）到 $+144.2$（2024）——\textbf{平均值掩盖了 2024 年的大尖峰}。\textbf{均值不能替代逐年观察。}
 
-第二，\textbf{绝对增量的城际差异极大}（图~\ref{fig:hetero}b）。以上海为例：12 年平均为 $-2.5$ \ugm，但逐年值从 $-68.0$（2020）到 $+144.2$（2024）——\textbf{平均值掩盖了 2024 年的大尖峰}。因此既不能说“春节一定有尖峰”，也不能因为一个城市的均值接近零就判定它没有尖峰；\textbf{均值不是可以替代逐年观察的统计量。}
-
-\begin{figure}[H]
+\begin{figure}[tbp]
 \centering
-\includegraphics[width=\textwidth]{fig3_heterogeneity.pdf}
+\includegraphics[width=0.95\textwidth]{fig3_heterogeneity.pdf}
 \caption{308 个平衡面板城市的尖峰幅度与基线浓度。(a) 相对倍数（峰值／基线）对基线浓度；(b) 绝对增量（峰值 $-$ 基线）对基线浓度。虚线为最小二乘拟合线，橙色点标注五座城市（武汉、丹东、上海、乌鲁木齐、拉萨）。注：图 (a) 的纵轴以基线为分母，负相关中有相当部分是分母效应。}
 \label{fig:hetero}
 \end{figure}
@@ -61,9 +59,9 @@
 
 图~\ref{fig:hourly} 给出五座城市除夕 12:00 至初一 06:00 的逐小时曲线。跨零点的爆发在各城形态一致、幅度差异极大：这既确认了尖峰的时间位置，也说明\textbf{用日均值衡量会把一个数小时的尖峰摊薄}——第一节所说的“口径决定结论”，在这里可以直观看到。
 
-\begin{figure}[H]
+\begin{figure}[tbp]
 \centering
-\includegraphics[width=0.92\textwidth]{fig2_hourly.pdf}
+\includegraphics[width=0.88\textwidth]{fig2_hourly.pdf}
 \caption{除夕午后至初一清晨的逐小时 \pmm{2.5}（五城，跨 12 个春节窗口取平均）。(a) 绝对水平（\ugm）；(b) 按各自除夕 12:00—14:00 的均值归一化为 100。阴影为 $\pm 1$ 标准误（$n=12$ 年）。注：本图基线取小时值，显示的倍数显著大于日均口径，两者不可直接比较。}
 \label{fig:hourly}
 \end{figure}
