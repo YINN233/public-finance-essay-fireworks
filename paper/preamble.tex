@@ -1,0 +1,80 @@
+% ============================================================
+%  preamble.tex — 公共财政学课程论文 版式与宏
+%  编译：xelatex main.tex（需两遍，交叉引用才稳定）
+%  字体：TeX Live 自带的 Fandol（不依赖系统安装中文字体）
+% ============================================================
+
+% ---------- 版式：课程要求 ----------
+% 正文 ≤30 页、双倍行距、12 号字、页边距 ≥1 英寸
+\usepackage[a4paper,margin=2.54cm,top=2.54cm,bottom=2.54cm]{geometry}
+\usepackage{setspace}
+\doublespacing
+
+% ---------- 中文 ----------
+\ctexset{
+  section/format      = \Large\bfseries\centering,
+  subsection/format   = \large\bfseries\raggedright,
+  subsubsection/format= \normalsize\bfseries\raggedright,
+  section/name        = {},
+  section/number      = \thesection,
+  subsection/number   = \thesection.\arabic{subsection},
+  contentsname        = 目录,
+  figurename          = 图,
+  tablename           = 表,
+}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.2em}
+
+% ---------- 数学与符号 ----------
+\usepackage{amsmath,amssymb}
+\newcommand{\ugm}{\,$\mu$g/m\textsuperscript{3}}   % 微克每立方米
+\newcommand{\pmm}[1]{PM\textsubscript{#1}}          % PM2.5 / PM10
+\newcommand{\SOtwo}{SO\textsubscript{2}}
+\newcommand{\NOtwo}{NO\textsubscript{2}}
+\newcommand{\Othree}{O\textsubscript{3}}
+\newcommand{\COone}{CO}
+\newcommand{\per}{$\%$}
+
+% ---------- 表格 ----------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+
+% ---------- 图 ----------
+\usepackage{graphicx}
+\graphicspath{{../figs/}{figures/}}
+\usepackage[font=small,labelfont=bf,labelsep=quad]{caption}
+\usepackage{float}
+
+% ---------- 列表 ----------
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=2em,itemsep=0.15em,topsep=0.3em}
+\setlist[enumerate]{leftmargin=2em,itemsep=0.15em,topsep=0.3em}
+
+% ---------- 超链接与页眉 ----------
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\fancyhead[C]{\small 烟花爆竹管制中的工具选择}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------- 标题、摘要 ----------
+\renewcommand{\abstractname}{摘\quad 要}
+
+% ---------- 杂项 ----------
+\usepackage{xcolor}
+\newcommand{\TODO}[1]{\textcolor{red}{【待补：#1】}}
+\newcommand{\tk}[1]{\textcolor{red}{【待核：#1】}}
+\setlength{\emergencystretch}{1.5em}
+\widowpenalty=10000
+\clubpenalty=10000

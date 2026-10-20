@@ -1,0 +1,41 @@
+% ============================================================
+%  烟花爆竹管制中的工具选择：一个价格工具为何三十年未被校准
+%  公共财政学（2026 年秋）· 第 1 场选题：外部性与公共品
+%
+%  编译：xelatex main.tex && xelatex main.tex
+%  或：  latexmk -xelatex main.tex
+% ============================================================
+\documentclass[12pt,a4paper,fontset=fandol]{ctexart}
+\input{preamble}
+
+\begin{document}
+
+% ---------- 封面与成员贡献（课程要求在摘要之前） ----------
+\input{sections/00-cover}
+
+% ---------- 摘要 ----------
+\input{sections/01-abstract}
+
+% ---------- 正文 ----------
+\input{sections/02-intro}
+\input{sections/03-institution}
+\input{sections/04-theory}
+\input{sections/05-data}
+\input{sections/06-magnitude}
+\input{sections/07-identification}
+\input{sections/08-comparison}
+\input{sections/09-discussion}
+\input{sections/10-conclusion}
+
+% ---------- 附录 ----------
+\clearpage
+\appendix
+\input{appendix/a-identification}
+\input{appendix/b-documents}
+\input{appendix/c-calibration}
+
+% ---------- 参考文献 ----------
+\clearpage
+\input{sections/99-references}
+
+\end{document}

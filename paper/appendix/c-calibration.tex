@@ -1,0 +1,216 @@
+\section{庇古校准的参数表与敏感性}\label{app:calibration}
+
+\textbf{本附录的结论是：这个校准给不出可引用的点估计。} 参数表在此，是为了让“给不出”这件事可核，而不是为了让读者相信某个数。
+
+\subsection{恒等式}
+
+以“每公斤烟花商品”为共同分母：
+\[
+\text{税}=tP,\qquad \text{基准}=\mathrm{EF}\times\mathrm{NEC\_SHARE}\times C,
+\]
+其中 $t=0.15$（从价），EF 以净火药量 NEC 为分母。不需要知道任何一个城市烧了多少烟花，也不需要知道全国产量。
+
+\subsection{参数块 A：排放因子（kg \pmm{2.5} / kg 净火药量）}
+
+\begin{table}[H]
+\centering
+\caption{排放因子}
+\label{tab:ef}
+\small
+\begin{tabular}{L{4.6cm}L{6.0cm}L{3.4cm}}
+\toprule
+\textbf{值} & \textbf{来源} & \textbf{证据档} \\
+\midrule
+\textbf{\pmm{2.5}：0.134—0.281，均值 0.200} & Keller \& Schragen (2021), \emph{Propellants, Explosives, Pyrotechnics} 46(5):825—842 & 实测；出版社摘要原文 \\
+\pmm{10}：0.200—0.325，均值 0.253 & 同上 & 实测 \\
+\pmm{10}：0.054—0.429 & Camilleri \& Vella (2010)，通风采样舱实测 & 实测 \\
+TSP：0.067—0.140 & Croteau et al. (2010) & \textbf{无法核实，不采用} \\
+综述 & Cao et al. (2018), \emph{Environmental Reviews} 26(2):133—155 & 综述 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{quote}
+\textbf{两处已更正。} 本表初版把 \pmm{10} 的区间安到了 \pmm{2.5} 头上（原写“\pmm{2.5} $=$ 200—325 g/kg”），根源是采信了一条把两者写反的检索摘要。另，\textbf{分母是净火药量 NEC，不是烟花商品总重}：后者含纸张、泥底、引线、包装，NEC 占比远小于 1。
+
+关于 Croteau et al. (2010)：可公开取得的摘要只写“5\% 至 13\% 的燃烧质量”（$\approx$50—130 g/kg），与 67—140 不符；67/140 疑为同文醛类表串行。\textbf{引用前须查明原表，本文不采用。}
+\end{quote}
+
+采用区间：$\mathrm{EF}\in[0.134,0.281]$。各研究差异极大，\textbf{必须报区间}。烟花本身是“研究最少的排放源之一”，这一句应写进数据局限。
+
+\subsection{参数块 B：出厂价}
+
+海关 HS 36041000“烟花、爆竹”，法定计量单位为千克：
+
+\begin{table}[H]
+\centering
+\caption{出口单价}
+\label{tab:price}
+\small
+\begin{tabular}{R{2.4cm}R{3.2cm}R{3.4cm}R{3.8cm}}
+\toprule
+\textbf{年} & \textbf{出口量（吨）} & \textbf{出口额} & \textbf{单价（美元/吨）} \\
+\midrule
+2015 & 334,200 & 8.47 亿美元 & 2,534 \\
+2020 & 270,912 & 6.40 亿美元 & 2,362 \\
+2021 & 322,901 & 8.05 亿美元 & 2,493 \\
+2024 & 408,396 & 11.62 亿美元 & 2,800 \\
+2025（1—10 月） & 347,000 & 9.52 亿美元 & 同比均价 $-5.43\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+采用区间：$P\approx2{,}400$—$2{,}800$ 美元/吨 $\approx$ 16—20 元/kg（按 7.1 汇率）。产地集中：湖南约 68\%、江西约 25\%。
+
+\textbf{两个必须在正文说明的陷阱：}
+
+\begin{enumerate}
+  \item \textbf{出口免征消费税}，税基是国内销售。出口单价只是“出厂价量级”的代理，不能直接当税基。但这一点本身有内容：\textbf{占产量很大一块的出口完全不在这一税种的射程内。}
+  \item \textbf{从价税与污染量的错配}：15\% 按销售额征收，排放正比于火药质量。同药量的廉价爆竹与高价礼花，税负可差数倍、污染一样。\textbf{每单位污染对应的税负随产品结构任意变动。}
+\end{enumerate}
+
+\subsection{参数块 C：每公斤 \pmm{2.5} 的价值}
+
+\paragraph{C-1　避免治理成本（原拟作主口径，现判定概念不适用）}
+
+\begin{table}[H]
+\centering
+\caption{单位治理成本}
+\label{tab:abatement-cost}
+\small
+\begin{tabular}{L{4.0cm}R{4.0cm}}
+\toprule
+\textbf{污染物} & \textbf{单位治理成本} \\
+\midrule
+\pmm{2.5} & 601 元/kg \\
+\SOtwo{} & 562 元/kg \\
+NO$_x$ & 677 元/kg \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{quote}
+\textbf{出处归属已更正。} GB/T 39793.1-2020（大气污染虚拟治理成本法）\textbf{规定的是核算方法，不是数值}：$D=E\times C\times\gamma$，$C$ 由实际调查法或成本函数法确定，\textbf{标准正文不含任何具体单价}，且单位用元/吨。601 元/kg 出自论文（Li et al., \emph{J.\ Cleaner Prod.} 2026）按该方法做的优化估算；\textbf{调查实例中颗粒物约 4,000 元/吨 $=$ 4 元/kg，相差 150 倍。}
+
+采用区间 $C\in[4,601]$，两端各有来源，\textbf{中间没有理由取任何一个点}。
+\end{quote}
+
+\textbf{C-1 不能作主口径的概念原因}：单位治理成本预设排放\textbf{可就地捕集}（点源：烟囱、除尘器）。烟花 \pmm{2.5} 是弥散释放，无从捕集，唯一的减排就是不烧。
+
+\paragraph{C-2　健康损害（上限口径）}
+
+\begin{table}[H]
+\centering
+\caption{短期剂量反应（中国）}
+\label{tab:dr}
+\small
+\begin{tabular}{L{7.6cm}L{6.8cm}}
+\toprule
+\textbf{估计} & \textbf{来源} \\
+\midrule
+\pmm{2.5} 每升高 10 \ugm，每日全因死亡 $+$0.49\%（95\%CI 0.39—0.59\%） & 李曼等（2018），中华流行病学杂志 39(10):1394—1401；33 篇文献、39 组死亡数据 \\
+每升高 10 \ugm，每日全因死亡 $+$0.68\%（95\%CI 0.59—0.77\%） & Liu C et al. (2019), \emph{NEJM} 381(8):705—715；652 城 \\
+RR $=1.0037$（校正后） & 田璐等（2015），环境与职业医学 32(11):1013—1018 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{统计生命价值（VSL）}
+\label{tab:vsl}
+\small
+\begin{tabular}{L{7.6cm}L{6.8cm}}
+\toprule
+\textbf{估计} & \textbf{来源} \\
+\midrule
+446 万元（95\%CI 211—940）；环境风险 470 万元（217—1020） & Wang et al. (2024), \emph{Social Science \& Medicine} 363:117471；19 项陈述偏好研究 Meta 分析，2020 年价 \\
+空气污染类中位数 168.9 万元（13.94—677.10） & 那艺诺等（2025），中国公共卫生 41(2):239—245；28 项研究 \\
+北京 554 万元（2016）；北京 613 万元（2010） & Jin, Andersson \& Zhang (2020), \emph{JEEM}；Huang et al. (2018) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+采用区间：$\mathrm{VSL}\in[170\text{ 万},470\text{ 万}]$ 元。
+
+\begin{quote}
+\textbf{C-2 的致命陷阱}：春节是短期高浓度暴露，\textbf{不能套用全年长期剂量反应系数}。长期系数以“年人均浓度”为自变量；若把一天 $+43$ \ugm{} 当作年均升高 43 \ugm{}，会把损害放大数百倍。\textbf{只用上表的短期（每日死亡）系数，且只在那一天上计。}
+\end{quote}
+
+\subsection{两个没有来源的参数}
+
+\begin{table}[H]
+\centering
+\caption{没有来源的两个参数——本校准失败的根因}
+\label{tab:nosource}
+\small
+\begin{tabular}{L{2.8cm}L{6.6cm}L{2.8cm}L{2.4cm}}
+\toprule
+\textbf{参数} & \textbf{含义} & \textbf{取值} & \textbf{来源} \\
+\midrule
+\texttt{NEC\_SHARE} & 净火药占商品重量的比例 & 0.15—0.45 & \textbf{无。自设。} \\
+\texttt{DK} & 扩散/箱模型：排放多少吨 $\rightarrow$ 浓度升高多少 & 跨约一个数量级 & \textbf{无。自设。} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\texttt{NEC\_SHARE} 之所以必需，是因为 EF 的分母是净火药量而 $P$ 是每公斤商品价格——\textbf{两者单位不匹配}。\texttt{DK} 之所以必需，是因为健康损害口径要把排放量转成浓度。
+
+\textbf{这两个参数恰好各自跨约一个数量级，而它们主导了不确定性。} 相反，\textbf{有可靠来源的四个参数（EF、$P$、剂量反应、VSL）恰恰不是主导项。}
+
+\subsection{组合与结果}
+
+由脚本 \texttt{scripts/tax\_calibration.py --write} 生成，\textbf{不手算}。
+
+\begin{table}[H]
+\centering
+\caption{校准结果}
+\label{tab:calib-app}
+\small
+\begin{tabular}{L{2.8cm}R{1.4cm}R{2.4cm}R{2.6cm}R{1.7cm}R{2.3cm}}
+\toprule
+\textbf{路线} & \textbf{组合数} & \textbf{税（元/kg）} & \textbf{基准（元/kg）} & \textbf{中位} & \textbf{税$\geq$基准} \\
+\midrule
+A 避免治理成本 & 1,296 & 2.40—3.00 & 0.08—76.0 & 0.174 & 约 220 组（17\%） \\
+B 健康损害 & 4,096 & 2.40—3.00 & 0.70—1,683 & 0.0154 & 277 组（6.8\%） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+比值区间：路线 A 为 0.032—37.3；路线 B 为 0.0014—4.30。
+
+\subsection{结论：为什么不能引用任何单点}
+
+\begin{itemize}
+  \item \textbf{两条路线都符号不稳。} 路线 A 有 17\% 的组合给出“税 $\geq$ 基准”；路线 B 在加入单位换算后有 6.8\% 的组合如此。
+  \item \textbf{修正一处错误就翻转结论。} 路线 B 在漏掉 \texttt{NEC\_SHARE} 换算时曾表现为“全部组合下税都低于基准”；补上之后 6.8\% 的组合反转。\textbf{这说明结论对参数假设过度敏感，而不是说明它稳健。}
+  \item 唯一勉强可提的是\textbf{中位数}（路线 B 中位组合下税覆盖基准约 1.5\%），\textbf{但必须与跨三个数量级的区间同时给出}。
+\end{itemize}
+
+\subsection{每个参数的可信度分级}
+
+\begin{table}[H]
+\centering
+\caption{参数可信度}
+\label{tab:credibility}
+\small
+\begin{tabular}{L{4.2cm}L{6.6cm}L{3.4cm}}
+\toprule
+\textbf{参数} & \textbf{可信度} & \textbf{能否单独引用} \\
+\midrule
+税率 15\%、征收环节 & 一手 & 可以 \\
+EF（区间） & 实测，多项研究差异大 & 可以，但只报区间 \\
+$P$（量级） & 海关数据 & 可以，但只作量级，不作税基 \\
+短期剂量反应 & 高质量 Meta 分析 & 可以 \\
+VSL & 多来源，口径不一 & 可以，但只报区间 \\
+C-1 治理成本 & 标准给方法、不给数值；两端相差 150 倍 & \textbf{不作主口径} \\
+\texttt{NEC\_SHARE} & \textbf{自设} & \textbf{不可以} \\
+\texttt{DK} 扩散假设 & \textbf{自设} & \textbf{不可以} \\
+比值本身 & 跨三个数量级 & \textbf{不报单点} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{quote}
+\textbf{本附录与正文第~\ref{sec:pigou}~节的对应关系}：正文用本表说明“校准算不出来”这一\textbf{结果}；“因此全国统一税率在结构上无法表达它”是\textbf{推断}，不是被估计出的参数。两者在正文中分开写，本附录不改变这一区分。
+\end{quote}
