@@ -2,7 +2,7 @@
 
 \subsection{设定与样本}\label{sec:id-sample}
 
-以城市 $\times$ 春节年份为观测单位，处理变量为“是否全面禁放”（\texttt{ban}）。因中国禁放政策交错实施、且 2023 年后部分城市由禁改限，处理\textbf{可逆转}，故主估计量采用 de Chaisemartin \& D'Haultf\oe uille（2020）允许处理逆转的估计量；Callaway \& Sant'Anna（2021）要求处理为吸收态，仅作附录对照。多向固定效应用交替投影（Frisch--Waugh--Lovell，FWL）实现，即通常所说的\textbf{双向固定效应}（two-way fixed effects，TWFE）模型；聚类稳健标准误采用 CR1 形式（只乘 $G/(G-1)$），Stata 的 \texttt{reghdfe} 默认还会再乘 $(N-1)/(N-K)$，两种口径都报告。
+以城市 $\times$ 春节年份为观测单位，处理变量为“是否全面禁放”（\texttt{ban}）。因中国禁放政策交错实施、且 2023 年后部分城市由禁改限（Yang et al., 2026），处理\textbf{可逆转}，故主估计量采用 de Chaisemartin \& D'Haultf\oe uille（2020）允许处理逆转的估计量；Callaway \& Sant'Anna（2021）要求处理为吸收态，仅作附录对照。多向固定效应用交替投影（Frisch--Waugh--Lovell，FWL）实现，即通常所说的\textbf{双向固定效应}（two-way fixed effects，TWFE）模型；聚类稳健标准误采用 CR1 形式（只乘 $G/(G-1)$），Stata 的 \texttt{reghdfe} 默认还会再乘 $(N-1)/(N-K)$，两种口径都报告。
 
 样本为 \textbf{306 城 $\times$ 6 年 $=1{,}836$ 行}（2021—2026）。窗口起点取 2021，是因为山西各市的首条政策记录始于该年；更早的窗口会把“首次进入记录”误当成一次 $0\rightarrow1$ 的切换。
 
