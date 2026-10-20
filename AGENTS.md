@@ -72,7 +72,8 @@ python3 -I scripts/check_province_map.py        # 6 校验城市→省份映射
 python3 -I scripts/run_did.py --same-province   # 7 第一层估计
 python3 -I scripts/placebo_days.py --province 河南 --treat-year 2023   # 8 安慰剂「日」
 python3 -I scripts/rand_inference.py --province 河南 --year 2023       # 9 随机化推断
-python3 scripts/make_figs.py --data-dir data --outdir figs            # 10 出图
+python3 -I scripts/observed_damage.py --write                           # 10 观测损害法（绕开 DK）
+python3 scripts/make_figs.py --data-dir data --outdir figs            # 11 出图
 ```
 
 ## 六、agent 派发规矩
@@ -114,4 +115,5 @@ python3 scripts/make_figs.py --data-dir data --outdir figs            # 10 出�
 - **文献三块已完成（2026-10-17）**。两条结论改写了论文写法：① "成本可见性"框架已有文献（Beiser-McGrath et al. 2023 最接近），**本文定位为应用，不是自创**；② 中文财税文献的主流建议是**提高该税目税率**（安体富、樊勇 2006；庞凤喜、王绿荫 2020），**本文须正面反驳"税率是约束条件"**。
 - **论文已写完初稿（2026-10-17）**：`docs/论文正文.md`，摘要 + 九节 + 附录 A/B/C，约 1.81 万字。
 - **论文正本已转为 LaTeX（2026-10-20）**：`paper/main.tex`，`make` 编译，51 页（正文第 3—26 页），零 overfull。
-- **剩余收尾**：封面五处姓名待填、六处【待核】原件、山西面板城市数（10 还是 11）、岳阳等地经费年份。
+- **§7.4 新增观测损害法（2026-10-20）**：不给“一公斤排放”定价，直接给观测浓度定价，绕开扩散参数 DK。比值区间由三个数量级收窄到 0.03—2.1；**水平仍不可识别，但城际离散稳健（p90/p10 = 9.3，23% 的城市-年初一无尖峰）**。
+- **剩余收尾**：封面五处姓名待填、六处【待核】原件、山西面板城市数（10 还是 11）、岳阳等地经费年份、人均烟花支出的一手来源。

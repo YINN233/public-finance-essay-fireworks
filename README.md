@@ -95,6 +95,7 @@ python3 -I scripts/rand_inference.py --province 河南 --year 2023
 python3 -I scripts/rand_inference.py --province 河南 --year 2023 --placebo-year 2022
 
 # 10. 重绘三张图（可选 → figs/）
+python3 -I scripts/observed_damage.py --write
 python3 scripts/make_figs.py --data-dir data --outdir figs
 ```
 
@@ -217,6 +218,7 @@ python3 scripts/make_figs.py --data-dir data --outdir figs
 | `docs/结果-第一层估计.md` | 识别诊断、三轮独立复核、两条自我更正 |
 | `docs/参数-庇古校准.md` | 三块参数与三个陷阱 |
 | `docs/校准结果.md` | 脚本产物，勿手改 |
+| `docs/结果-观测损害.md` | 观测损害法的结果：直接给浓度定价，绕开扩散参数 |
 | `docs/文献综述.md` | 文献三块 + 两条改写论文写法的结论 |
 | `docs/spec-研究设计.md` | 研究问题、制度事实与核实状态 |
 | `docs/参考文献.md` | 已核 DOI 与第三批中文文献 |
