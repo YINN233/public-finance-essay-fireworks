@@ -162,7 +162,7 @@ def fe_cluster(y, d, groups, unit):
     dd = demean(d, groups)
     var = sum(v * v for v in dd)
     if var == 0:
-        return None, None, 0, 0
+        return None, None, 0, 0, None
     beta = sum(yd[i] * dd[i] for i in range(len(y))) / var
     resid = [yd[i] - beta * dd[i] for i in range(len(y))]
     g = defaultdict(float)
@@ -174,7 +174,11 @@ def fe_cluster(y, d, groups, unit):
     se = None
     if G > 1 and var > 0:
         se = ((meat / (var ** 2)) * (G / (G - 1))) ** 0.5
-    return beta, se, G, n_eff
+    # within R²：以残差化后的 y 为总平方和，只衡量 d 对 y 的解释力
+    ss_tot = sum(v * v for v in yd)
+    ss_res = sum(v * v for v in resid)
+    r2 = (1.0 - ss_res / ss_tot) if ss_tot > 0 else None
+    return beta, se, G, n_eff, r2
 
 
 def main():
@@ -408,18 +412,20 @@ def main():
     if args.prov_year_fe:
         noprov = [c for c in units if c not in prov]
         pt = [prov.get(r["city"], "_缺省") + "|" + str(r["_year"]) for r in recs]
-        beta, se, G, n_eff = fe_cluster(y, d, [us, pt], us)
+        beta, se, G, n_eff, r2 = fe_cluster(y, d, [us, pt], us)
         spec = "城市 + 省份×年份"
         if noprov:
             print("\n   ⚠️ %d 个城市没有省份归属，其省份×年份组记为「_缺省」，"
                   "等于把它们放在同一个伪省份里——请先补 data/city_province.csv"
                   % len(noprov))
     else:
-        beta, se, G, n_eff = fe_cluster(y, d, [us, ts], us)
+        beta, se, G, n_eff, r2 = fe_cluster(y, d, [us, ts], us)
         spec = "城市 + 年份"
     print("\nTWFE 对照（固定效应：%s）：β = %s，聚类标准误 = %s" % (
         spec, "%+.2f" % beta if beta is not None else "—",
         "%.2f" % se if se else "—"))
+    print("   样本 N = %d；within R² = %s" % (
+        len(y), "%.4f" % r2 if r2 is not None else "—"))
     print("   聚类数 %d；**有效聚类数 %d**（残差化处理变量非零的城市数）"
           % (G, n_eff))
     if n_eff < G * 0.5:
