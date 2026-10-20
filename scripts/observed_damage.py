@@ -60,12 +60,10 @@ PARAMS = [
     dict(key="harvest", name="死亡位移系数（净死亡占观测死亡的比例）",
          values=[0.3, 0.5, 1.0],
          grade="自设", src="短期暴露的 harvesting 效应，本文未做专门估计"),
-    dict(key="spend", name="人均烟花零售支出（元/年）",
-         values=[34.0, 42.0, 50.0],
-         grade="有来源", src="2024 年国内市场规模 480—700 亿元 ÷ 约 14 亿人"),
-    dict(key="exf", name="出厂价 / 零售价",
-         values=[0.5, 0.6, 0.7],
-         grade="自设", src="税基为生产环节销售额，零售含流通加价"),
+    dict(key="spend", name="人均烟花支出（元/年，出厂口径）",
+         values=[22.7, 33.1, 51.1, 56.8],
+         grade="有来源", src="协会口径：(800−80)/14.08=51.1、(900−100)/14.08=56.8；"
+                             "零售口径按 1.5 倍加价折算：480/1.5/14.08=22.7、700/1.5/14.08=33.1"),
 ]
 TAX_RATE = 0.15
 DEATH_PER_CAPITA_DAY = 0.0076 / 365  # 粗死亡率 7.6‰/年，按日折算
@@ -187,7 +185,7 @@ def main():
         for combo in combos:
             p = dict(zip(keys, combo))
             kcoef = DEATH_PER_CAPITA_DAY * (p["dr"] / 10.0) * p["vsl"] * p["attrib"] * p["harvest"]
-            tax = TAX_RATE * p["spend"] * p["exf"]
+            tax = TAX_RATE * p["spend"]
             d = [max(0.0, kcoef * s) for s in S]
             r = [di / tax for di in d]
             dmgs.append(st.median(d)); taxes.append(tax)
@@ -202,12 +200,12 @@ def main():
     # 中心情形明细
     say("## 四、中心情形")
     say()
-    central = dict(dr=0.0049, vsl=3.0e6, attrib=0.5, harvest=0.5, spend=42.0, exf=0.6)
+    central = dict(dr=0.0049, vsl=3.0e6, attrib=0.5, harvest=0.5, spend=51.1)
     kc = DEATH_PER_CAPITA_DAY * (central["dr"] / 10.0) * central["vsl"] * central["attrib"] * central["harvest"]
-    tax = TAX_RATE * central["spend"] * central["exf"]
-    say(f"参数：DR=0.49%、VSL=300 万元、归因 50%、位移 0.5、人均支出 42 元、出厂/零售 0.6。")
+    tax = TAX_RATE * central["spend"]
+    say("参数：DR=0.49%、VSL=300 万元、归因 50%、位移 0.5、人均支出 51.1 元（协会口径）。")
     say()
-    say(f"人均税收 = 15% × 42 × 0.6 = **{tax:.2f} 元/人**。")
+    say(f"人均税收 = 15% × 51.1 = **{tax:.2f} 元/人**。")
     say()
     say("| 口径 | 中位 ΣΔC | 中位人均损害 | 损害/税收 | 损害>税收的城市-年占比 |")
     say("|---|---|---|---|---|")
@@ -231,8 +229,8 @@ def main():
     say()
     say("**不能得出的：**")
     say()
-    say("1. **不能据此判定税率偏低或偏高。** 水平结论依赖四个判断："
-        "归因率、死亡位移系数、人均支出、出厂/零售比；其中两个是自设。")
+    say("1. **不能据此判定税率偏低或偏高。** 水平结论依赖三个判断："
+        "归因率、死亡位移系数、人均支出口径；其中死亡位移系数是自设。")
     say("2. **只估了健康损害。** 未计入人身伤害、火灾、噪声，也未计入非春节时段。"
         "因此「税高于健康损害」不等于「税过高」。")
     say("3. **口径 C 不作为主口径。** 它出现负值，说明春节停摆造成的浓度下降"
