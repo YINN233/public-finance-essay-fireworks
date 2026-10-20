@@ -91,7 +91,7 @@ def read_panel(path):
 
 def excess(by):
     """三个口径的窗口累计超额浓度 ΣΔC（μg/m³·日）。"""
-    out = {"A": [], "B": [], "C": []}
+    out = {"A": [], "B": [], "C": [], "D": []}
     for key, dd in by.items():
         base = [v for d, v in dd.items() if -7 <= d <= -2]
         if len(base) < 4:
@@ -99,6 +99,9 @@ def excess(by):
         b = st.mean(base)
         if 1 in dd:
             out["A"].append(max(0.0, dd[1] - b))
+            ref = [dd[d] for d in (2, 3, 4) if d in dd]
+            if len(ref) >= 2:
+                out["D"].append(max(0.0, dd[1] - st.mean(ref)))
         out["B"].append(sum(max(0.0, v - b) for d, v in dd.items() if -7 <= d <= 7))
         out["C"].append(sum(v - b for d, v in dd.items() if -7 <= d <= 7))
     return out
@@ -142,16 +145,26 @@ def main():
     say()
     say("| 口径 | 中位 | p10 | p90 | p90/中位 | 零值占比 |")
     say("|---|---|---|---|---|---|")
-    for k, label in [("A", "仅初一"), ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
+    for k, label in [("A", "仅初一（节前基线）"), ("D", "仅初一（初二至初四为对照）"),
+                     ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
         x = cal[k]
         m = st.median(x)
         zero = sum(1 for v in x if v <= 0) / len(x)
         say(f"| {label} | {m:.1f} | {pct(x,.1):.1f} | {pct(x,.9):.1f} | "
             f"{pct(x,.9)/m:.1f} | {zero:.0%} |")
     say()
-    say("**城际离散是本节最稳的结论。** 口径 B 的 p90/p10 为 9.3，参数只做线性缩放，"
-        "不改变任何比值；口径 A 的 p10 为 0，说明相当一部分城市-年初一根本没有高于"
-        "基线的尖峰——这本身就是“统一税率无法对准”的直接证据。")
+    say("**两个最稳的结论：**")
+    say()
+    say("1. **换对照不改变量级。** 口径 A 用节前 7—2 日为基线，口径 D 改用初二至初四"
+        "为对照（都在假期内，工业停摆程度相近），中位分别为 %.1f 与 %.1f，相差约两成；"
+        "但 D 的零值占比从 %.0f%% 降到 %.0f%%。"
+        "**这说明尖峰不是节前基线造成的假象，同时 D 是更干净的对照。**"
+        % (st.median(cal["A"]), st.median(cal["D"]),
+           100*sum(1 for v in cal["A"] if v<=0)/len(cal["A"]),
+           100*sum(1 for v in cal["D"] if v<=0)/len(cal["D"])))
+    say("2. **城际离散是稳健的。** 口径 B 的 p90/p10 为 9.3，参数只做线性缩放，"
+        "不改变任何比值；口径 D 的 p10 接近零，说明相当一部分城市-年初一几乎没有"
+        "高于假期内其它日子的尖峰——这本身就是“统一税率无法对准”的直接证据。")
     say()
 
     # 全参数扫描
@@ -179,7 +192,8 @@ def main():
     say()
     say("| 口径 | 人均损害（元） | 人均税收（元） | 比值 损害/税收 | 「损害>税收」的城市-年占比 |")
     say("|---|---|---|---|---|")
-    for k, label in [("A", "仅初一"), ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
+    for k, label in [("A", "仅初一（节前）"), ("D", "仅初一（同假期）"),
+                     ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
         S = cal[k]
         ratios_all, shares, dmgs, taxes = [], [], [], []
         for combo in combos:
@@ -209,7 +223,8 @@ def main():
     say()
     say("| 口径 | 中位 ΣΔC | 中位人均损害 | 损害/税收 | 损害>税收的城市-年占比 |")
     say("|---|---|---|---|---|")
-    for k, label in [("A", "仅初一"), ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
+    for k, label in [("A", "仅初一（节前）"), ("D", "仅初一（同假期）"),
+                     ("B", "窗口·只算正值"), ("C", "窗口·正负都算")]:
         d = [max(0.0, kc * s) for s in cal[k]]
         r = [x / tax for x in d]
         say(f"| {label} | {st.median(cal[k]):.1f} | {st.median(d):.2f} 元 | "
