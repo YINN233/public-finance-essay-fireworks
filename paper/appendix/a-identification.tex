@@ -1,48 +1,46 @@
 \section{第一层因果识别的完整诊断}\label{app:identification}
 
-\textbf{本附录的目的不是报告一个估计，而是报告为什么报告不出一个估计。} 正文第~\ref{sec:identification}~节给出诊断与结论；本附录给出全部数字与复现命令。凡本附录中的数字，均由当前仓库（\texttt{panel\_cityyear.csv} 与 \texttt{policy.csv}）重新跑出；旧面板时代的数字已单独标注并说明为何不再适用。
+\textbf{本附录的目的不是报告一个估计，而是报告为什么报告不出一个估计。} 正文第~\ref{sec:identification}~节给出诊断与结论；本附录给出全部数字与复现命令。凡本附录中的数字，均由当前仓库重新跑出。
 
 \subsection{样本、批次与处理变量覆盖}
-
-三个政策批次，方向不一：
 
 \begin{table}[H]
 \centering
 \caption{三个政策批次}
 \label{tab:batches-a}
 \small
-\begin{tabular}{L{1.2cm}L{6.6cm}L{2.2cm}L{2.4cm}R{1.5cm}}
+\begin{tabular}{L{1.2cm}L{6.8cm}L{2.2cm}L{2.2cm}R{1.4cm}}
 \toprule
 \textbf{批次} & \textbf{城市} & \textbf{方向} & \textbf{同省对照} & \textbf{处理单位} \\
 \midrule
 2023 & 信阳、南阳、平顶山、洛阳、郑州 & 退出 & 河南其余 12 城 & 5 \\
-2024 & 东营、滨州 & \textbf{进入} & 山东其余城市 & 2 \\
+2024 & 东营 & \textbf{进入} & 山东其余城市 & 1 \\
 2026 & 临汾、吕梁、大同、太原、晋中、晋城、朔州、运城、长治、阳泉 & 退出（省级） & \textbf{0} & \textbf{1} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{处理变量的覆盖：} 3,672 个城市-年中 \texttt{policy\_type} 非空 243 个（6.6\%）；306 城中仅 34 城有任何政策记录，其余 272 城全空；估计窗口 2021—2026 的 1,836 行中非空 201 行（10.9\%）。空白按 0 处理是记录口径，不是事实。
+\noindent 滨州与东营同日施行限$\rightarrow$禁，但其方案原文未取得、证据档为 \texttt{verified=N}，故排除出主估计。样本为 305 城 $\times$ 6 年 $=1{,}830$ 行。
+
+\textbf{处理变量的覆盖：} 3,672 个城市-年中 \texttt{policy\_type} 非空 243 个（6.6\%）；306 城中仅 34 城有记录，其余 272 城全空；估计窗口 1,830 行中非空 201 行（11.0\%），即 \textbf{89\% 无记录}。空白按 0 处理是记录口径，不是事实。
 
 \begin{quote}
-\textbf{一处更正（2026-10-20）。} 本附录上一版写“样本期内没有任何一次限放$\rightarrow$禁放的切换。唯一一次是武汉 2006$\rightarrow$2013”。\textbf{这是错的。} \texttt{policy.csv} 中东营（2024-01-02 施行，政府令第 208 号，\texttt{verified=Y}）与滨州（2024-01-01，\texttt{verified=N}）都是限$\rightarrow$禁；面板已将两城 2024—2026 的 \texttt{ban} 置 1。上一版的批次表只有 2023 河南与 2026 山西，漏掉了 2024 山东。现已补入。
+\textbf{一处更正（2026-10-20）。} 上一版写“样本期内没有任何限放$\rightarrow$禁放的切换”，是错的：东营（2024-01-02，政府令第 208 号，\texttt{verified=Y}）与滨州（2024-01-01，\texttt{verified=N}）都是限$\rightarrow$禁。上一版的批次表只有 2023 与 2026，漏掉了 2024。现已补入，并把未核实的滨州排除出主估计。
 \end{quote}
 
 \subsection{诊断零：安慰剂结果变量}
-
-用节前基线作结果变量。燃放管制不应改变年前的浓度。
 
 \begin{table}[H]
 \centering
 \caption{安慰剂结果变量}
 \label{tab:placebo-outcome-a}
 \small
-\begin{tabular}{L{4.4cm}R{2.0cm}R{2.2cm}R{2.4cm}}
+\begin{tabular}{L{4.2cm}R{1.8cm}R{1.8cm}R{1.8cm}R{1.8cm}}
 \toprule
-\textbf{设定} & $\beta$ & \textbf{SE} & \textbf{有效聚类数} \\
+\textbf{设定} & $\beta$ & \textbf{SE} & \textbf{有效聚类} & \textbf{within $R^2$} \\
 \midrule
-城市 $+$ 年份 & $+10.62$ & 2.54 & 306 \\
-城市 $+$ 省份 $\times$ 年份 & $-4.48$ & 1.59 & 33 \\
+城市 $+$ 年份 & $+12.10$ & 2.43 & 305 & 0.0044 \\
+城市 $+$ 省份 $\times$ 年份 & $-3.93$ & 1.87 & 32 & 0.0004 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -56,7 +54,7 @@
 \caption{安慰剂“日”扫描}
 \label{tab:placebo-days-a}
 \small
-\begin{tabular}{lR{1.3cm}R{1.3cm}R{1.6cm}R{1.3cm}R{1.3cm}}
+\begin{tabular}{lR{1.2cm}R{1.2cm}R{1.5cm}R{1.2cm}R{1.2cm}}
 \toprule
 \multicolumn{6}{l}{\textbf{河南（同省对照，17 城）}} \\
 \texttt{rel\_day} & $-6$ & $-4$ & $\mathbf{+1}$ & $+3$ & $+6$ \\
@@ -72,7 +70,7 @@ $t$ & $-2.80$ & $-8.03$ & $\mathbf{+3.02}$ & $+2.81$ & $+4.49$ \\
 \end{tabular}
 \end{table}
 
-河南的初一不显著（$t=-0.56$），无关日 $-6$、$-4$、$+3$、$+6$ 显著。山西的初一显著（$+37.7$，$t=3.02$），但 $-7$ 到 $-1$ 的每一天也都显著（$t$ 在 $-2.8$ 到 $-8.0$ 之间）——处理组在政策前已在相对下行。
+河南的初一不显著（$t=-0.56$），无关日 $-6$、$-4$、$+3$、$+6$ 显著。山西的初一显著（$+37.7$，$t=3.02$），但 $-7$ 到 $-1$ 的每一天也都显著（$t$ 在 $-2.8$ 到 $-8.0$ 之间）。
 
 复现：
 {\small
@@ -90,12 +88,12 @@ python3 -I scripts/placebo_days.py --province 山西 --treat-year 2026 \
 \caption{各批次事件路径（原始差）}
 \label{tab:preperiods-a}
 \small
-\begin{tabular}{L{2.0cm}L{8.4cm}R{2.6cm}}
+\begin{tabular}{L{1.8cm}L{8.6cm}R{2.2cm}}
 \toprule
 \textbf{批次} & \textbf{前置期} & \textbf{切换当期} \\
 \midrule
 2023 河南 & $-1$：$-46.61$ & $+75.30$ \\
-2024 山东 & $-2$：$-56.87$；$-1$：$+141.97$ & $-81.48$ \\
+2024 东营 & $-2$：$-56.97$；$-1$：$+117.42$ & $-42.28$ \\
 2026 山西 & $-4$：$-45.83$；$-3$：$+32.42$；$-2$：$+15.24$；$-1$：$-22.33$ & $+44.61$ \\
 \bottomrule
 \end{tabular}
@@ -103,64 +101,68 @@ python3 -I scripts/placebo_days.py --province 山西 --treat-year 2026 \
 
 \noindent 路径是原始差（处理组变化减对照组变化），未按方向翻符号。三个批次的前置期都有与效应同量级的波动。
 
-\subsection{固定效应设定与窗口敏感性}
+\subsection{固定效应设定、窗口敏感性，与一个未核实城市的去留}
 
 \begin{table}[H]
 \centering
-\caption{固定效应设定}
+\caption{固定效应设定（剔除滨州）}
 \label{tab:fe-a}
 \small
-\begin{tabular}{L{4.4cm}R{2.0cm}R{2.2cm}R{2.2cm}R{2.4cm}}
+\begin{tabular}{L{3.8cm}R{1.8cm}R{1.9cm}R{2.0cm}R{1.7cm}R{1.8cm}}
 \toprule
-\textbf{设定} & $\beta$ & \textbf{SE（CR1）} & \textbf{SE（含校正）} & \textbf{有效聚类数} \\
+\textbf{设定} & $\beta$ & \textbf{SE（CR1）} & \textbf{SE（含校正）} & \textbf{有效聚类} & \textbf{within $R^2$} \\
 \midrule
-城市 $+$ 年份 & $-31.74$ & 10.60 & 11.6—12.4 & 306 \\
-城市 $+$ 省份 $\times$ 年份 & $-5.34$ & 14.41 & 14.8—15.2 & \textbf{33} \\
+城市 $+$ 年份 & $-36.70$ & 10.55 & 11.5—11.7 & 305 & 0.0050 \\
+城市 $+$ 省份 $\times$ 年份 & $+1.12$ & 16.36 & 18.0—19.1 & 32 & 0.0000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{窗口敏感性（\texttt{--min-year}）}
+\caption{窗口敏感性（\texttt{--min-year}，已剔除滨州）}
 \label{tab:window}
 \small
-\begin{tabular}{R{1.9cm}R{1.2cm}R{2.2cm}R{2.9cm}L{4.5cm}}
+\begin{tabular}{R{1.8cm}R{1.0cm}R{2.1cm}R{2.4cm}L{5.0cm}}
 \toprule
 \texttt{min\_year} & \textbf{年数} & \textbf{城市$+$年份} & \textbf{城市$+$省份$\times$年份} & \textbf{合法？} \\
 \midrule
-2019 & 8 & $-40.62$ & $-8.09$ & $\times$ 河南对照城出现 2020 假切换 \\
-2021 & 6 & $-31.74$ & $-5.34$ & $\checkmark$ \\
-2022 & 5 & $-40.48$ & $-7.62$ & $\checkmark$ \\
+2019 & 8 & $-43.68$ & $-5.51$ & $\times$ 河南对照城出现 2020 假切换 \\
+2021 & 6 & $-36.70$ & $+1.12$ & $\checkmark$ \\
+2022 & 5 & $-45.47$ & $+1.28$ & $\checkmark$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+\begin{table}[H]
+\centering
+\caption{一个未核实城市的去留足以改变符号}
+\label{tab:binzhou}
+\small
+\begin{tabular}{L{4.6cm}R{2.2cm}R{2.8cm}}
+\toprule
+\textbf{样本} & \textbf{城市$+$年份} & \textbf{城市$+$省份$\times$年份} \\
+\midrule
+含滨州 & $-31.74$ & $-5.34$ \\
+\textbf{剔除滨州（主估计）} & $\mathbf{-36.70}$ & $\mathbf{+1.12}$ \\
+剔除东营与滨州 & $-43.24$ & $+10.80$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{这是本附录最重要的表。} 一个证据档为 \texttt{verified=N} 的城市，其去留决定了两列之间是否出现符号翻转：放回去，两列都是负号；拿掉，第二列变成正号。\textbf{在处理变量有 89\% 缺失的情况下，标准误的大小远不如“样本里放了谁”重要。}
+
 \begin{quote}
-\textbf{一处撤回（2026-10-20）。} 上一版报告 $-42.60$（9.52）、$+10.80$（18.77，有效聚类 17），并据此认为“符号随固定效应设定翻转”。那是政策库纳入 2024 山东批次之前的面板。当前面板下两个设定都是负号，\textbf{翻转不成立，该诊断撤回}。复核过的六个数字随之失效，见第~\ref{app:replication}~小节。
+\textbf{一处更正（2026-10-20）。} 上一版报告 $-42.60$（9.52）与 $+10.80$（18.77，有效聚类 17），称“符号随固定效应设定翻转”；随后因纳入山东批次而改为 $-31.74$ 与 $-5.34$，并说“翻转不再出现、该诊断撤回”。两次表述都不完整。现在的正确表述是：\textbf{翻转取决于是否把未核实的滨州计入处理组}。这不是稳健性问题，是测量误差问题。
 \end{quote}
 
 \subsection{精确随机化推断}
 
-河南 17 城取 5，$C(17,5)=6{,}188$，全部穷举。
-
-\begin{table}[H]
-\centering
-\caption{精确随机化推断}
-\label{tab:ri}
-\small
-\begin{tabular}{L{4.6cm}R{2.2cm}R{2.0cm}R{2.2cm}R{2.2cm}}
-\toprule
-\textbf{口径} & \textbf{观测统计量} & \textbf{双侧 $p$} & \textbf{位于零分布} & \textbf{零分布 sd} \\
-\midrule
-初一日均 \pmm{2.5} & $-26.20$ & 0.1836 & $-1.35$ SD & 19.39 \\
-\bottomrule
-\end{tabular}
-\end{table}
+河南 17 城取 5，$C(17,5)=6{,}188$，全部穷举。观测统计量 $-26.20$，双侧 $p=0.1836$，位于零分布的 $-1.35$ 个标准差处，零分布标准差 19.39。\textbf{不能拒绝零假设。}
 
 \paragraph{校准性。} 对河南 8 次无政策变动的转移逐次检验，得 $p=0.043$、$0.173$、$0.447$、$0.516$、$0.587$、$0.850$、$0.929$、$0.999$，KS 距离 0.225（$n=8$ 的 5\% 临界值约 0.457，不拒绝）。
 
-\paragraph{边界。} 本检验不是因果零假设下的检验；政策内生正是主要担忧。它真正有价值的产出是噪声尺度。
+\paragraph{边界。} 本检验不是因果零假设下的检验；它真正有价值的产出是噪声尺度。
 
 \subsection{逐城贡献与方向异常}
 
@@ -169,36 +171,28 @@ python3 -I scripts/placebo_days.py --province 山西 --treat-year 2026 \
 \caption{切换当期逐城与对照之差（\ugm，原始差）}
 \label{tab:per-city}
 \small
-\begin{tabular}{L{2.4cm}L{10.6cm}}
+\begin{tabular}{L{2.2cm}L{10.8cm}}
 \toprule
 \textbf{批次} & \textbf{逐城} \\
 \midrule
 2023 河南（退出） & 信阳 $+36.4$；平顶山 $+47.4$；洛阳 $+74.2$；南阳 $+88.6$；郑州 $+129.8$ \\
-2024 山东（进入） & 滨州 $-120.7$；东营 $-42.3$ \\
+2024 东营（进入） & 东营 $-42.3$ \\
 2026 山西（退出） & 太原 $-103.8$；大同 $+0.1$；阳泉 $+31.3$；吕梁 $+36.4$；长治 $+50.3$；运城 $+62.7$；晋城 $+74.3$；晋中 $+90.7$；临汾 $+96.1$；朔州 $+107.6$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-2023 批次五城全部为正（放开后相对上升），方向与理论一致；2024 批次两城都为负（收紧后相对下降），方向也一致。\textbf{方向一致而前置期不平稳，正是“‘看起来对’但不可信”的典型形态。}
-
-山西的太原仍为唯一反号城市且幅度最大（$-103.8$），单城把 10 城均值从 $+60.2$ 拉到 $+43.7$。
+2023 批次五城全部为正，2024 批次为负，方向都符合“退出上升、进入下降”。\textbf{方向一致而前置期不平稳，正是“看起来对”但不可信的典型形态。} 山西的太原仍是唯一反号城市且幅度最大，单城把 10 城均值从 $+60.2$ 拉到 $+43.7$。
 
 \subsection{结构性限制：省级切换是最难识别的变异}
 
-山西全部面板城市在 2026 年退出处理。三条彼此独立的原因令其不可识别：
-
-\begin{enumerate}
-  \item \textbf{省内没有对照。} 同省对照库为空——省级通告一夜之间改变全省所有地级市。
-  \item \textbf{省份 $\times$ 年份固定效应将其整体吸收。} 处理变异与省份 $\times$ 年份虚拟变量完全共线，对 $\beta$ 的贡献为零。
-  \item \textbf{有效处理聚类数是 1，不是 10。} 这些城市来自同一个省政府的同一个决定。城市层聚类给 SE $=14.8$（$t=3.54$），省级聚类给 SE $=1.38$（$t=37.9$，荒谬）。
-\end{enumerate}
+山西全部面板城市在 2026 年退出处理。三条彼此独立的原因令其不可识别：省内没有对照；省份 $\times$ 年份固定效应将其整体吸收；有效处理聚类数是 1 而不是 10（城市层聚类 SE $=14.8$，省级聚类 SE $=1.38$，后者荒谬）。
 
 \textbf{补充证据：山西 vs.\ 邻省（河北、河南、陕西、内蒙古）的逐年差。}
 
 \begin{table}[H]
 \centering
-\caption{山西减邻省，逐年（当前面板）}
+\caption{山西减邻省，逐年}
 \label{tab:shanxi-neighbor}
 \scriptsize
 \begin{tabular}{lrrrrrrrrrrrr}
@@ -210,11 +204,7 @@ python3 -I scripts/placebo_days.py --province 山西 --treat-year 2026 \
 \end{tabular}
 \end{table}
 
-2026 年放开的差为 $+53.5$，而 \textbf{2020 年（无任何政策变化）为 $+56.8$，比它还大}。那个“效应”落在历史波动范围之内。
-
-\begin{quote}
-\textbf{这一条推翻了本组早先的判断。} 原设想写“省级切换的好处：一夜之间改变全省十几个地级市，是最接近外生冲击的变异”。事实相反：它同时清空了省内对照、被省份 $\times$ 年份虚拟变量吸收、且只有 1 个有效处理聚类。\textbf{它是本文最难识别的变异类型。}
-\end{quote}
+2026 年的 $+53.5$ 小于 2020 年（无任何政策变化）的 $+56.8$。那个“效应”落在历史波动范围之内。
 
 \subsection{噪声尺度与功效}
 
@@ -239,11 +229,7 @@ $\Delta$(初一) 的省内标准差（河南，2022$\rightarrow$2023） & \textb
 \end{table}
 
 \begin{quote}
-\textbf{更正：$\sigma$ 是 35.3，不是 46。} 早先的 $\sigma\approx46$ 漏掉了有限总体校正中的 $-2\operatorname{Cov}$ 项。正确公式为
-\[
-\operatorname{Var}(\text{stat})=\frac{S^2N^2}{(N-1)\,k\,(N-k)},\qquad N=17,\ k=5\ \Rightarrow\ \mathrm{sd}(\text{stat})=0.5487\,S.
-\]
-但\textbf{不能据此把采集目标降到 $K\approx10$}：$\sigma$ 在转移之间波动 3 倍（35—107），35.3 恰是最有利的那一年。\textbf{规划要用中心值 $\sigma\approx70$。}
+\textbf{更正：$\sigma$ 是 35.3，不是 46。} 早先的 $\sigma\approx46$ 漏掉了有限总体校正中的 $-2\operatorname{Cov}$ 项。正确公式为 $\operatorname{Var}(\text{stat})=S^2N^2/[(N-1)k(N-k)]$，$N=17,k=5$ 时 $\mathrm{sd}=0.5487S$。但\textbf{不能据此把采集目标降到 $K\approx10$}：$\sigma$ 在转移之间波动 3 倍（35—107），35.3 恰是最有利的那一年。\textbf{规划要用中心值 $\sigma\approx70$。}
 \end{quote}
 
 \begin{table}[H]
@@ -263,7 +249,7 @@ $K$ & $M$ & $\sigma=35.3$ & $\sigma=70$ & \textbf{能否检测 43} \\
 \end{tabular}
 \end{table}
 
-目标为 20—30 个“带同省对照的市级切换城市”，现有 7 个（河南 5、山东 2）。\textbf{但这 20—30 个城市可能根本不存在}——2017—2019 年那波禁放很多是省级统一部署，结构上不可用。
+目标为 20—30 个“带同省对照的市级切换城市”，现有 6 个已核实（河南 5、东营 1）。\textbf{但这 20—30 个城市可能根本不存在}——2017—2019 年那波禁放很多是省级统一部署，结构上不可用。
 
 \subsection{三轮独立复核}\label{app:replication}
 
@@ -274,7 +260,7 @@ $K$ & $M$ & $\sigma=35.3$ & $\sigma=70$ & \textbf{能否检测 43} \\
 \caption{三轮独立复核（旧面板）}
 \label{tab:replication-a}
 \small
-\begin{tabular}{L{2.0cm}L{3.8cm}L{9.0cm}}
+\begin{tabular}{L{1.8cm}L{3.6cm}L{9.2cm}}
 \toprule
 \textbf{复核者} & \textbf{独立性} & \textbf{结果} \\
 \midrule
@@ -286,7 +272,7 @@ C 另起炉灶 & 未读脚本与结论文档，自行重建时间轴与估计量
 \end{table}
 
 \begin{quote}
-\textbf{本小节的适用范围必须限定。} 上述复核在 \textbf{2026-10-15 的面板}上完成，当时政策库尚未纳入 2024 年山东批次。纳入后主估计由 $-42.60$ 变为 $-31.74$，\textbf{复核过的具体数值不再适用于本版}。复核仍然有效的部分，是它对管线的验证：交替投影、\texttt{rel\_day} 映射、政策库展开三项均无 bug，因此“零结果是管线造成的”这一替代解释仍被排除。本版所有估计均由当前面板重新跑出。
+\textbf{适用范围必须限定。} 上述复核在 \textbf{2026-10-15 的面板}上完成，当时政策库尚未纳入 2024 年山东批次、也未剔除滨州。此后主估计由 $-42.60$ 变为 $-36.70$，\textbf{复核过的具体数值不再适用于本版}。复核仍然有效的部分，是它对管线的验证：交替投影、\texttt{rel\_day} 映射、政策库展开三项均无 bug，因此“零结果是管线造成的”这一替代解释仍被排除。
 \end{quote}
 
 \subsection{已知口径问题}
@@ -295,8 +281,8 @@ C 另起炉灶 & 未读脚本与结论文档，自行重建时间轴与估计量
 \centering
 \caption{代码与口径的已知问题}
 \label{tab:code-issues}
-\small
-\begin{tabular}{R{0.7cm}L{3.2cm}L{8.0cm}L{2.4cm}}
+\footnotesize
+\begin{tabular}{R{0.7cm}L{2.9cm}L{7.7cm}L{3.0cm}}
 \toprule
 \textbf{编号} & \textbf{位置} & \textbf{问题} & \textbf{状态} \\
 \midrule
@@ -306,20 +292,19 @@ C 另起炉灶 & 未读脚本与结论文档，自行重建时间轴与估计量
 4 & 窗口截断 & 无法用命令行关闭 & 已修 \\
 5 & 随机化脚本 & 只校验首个城市的年份完整性 & 已修 \\
 6 & 随机化脚本 & 接受处理定义参数但忽略它 & \textbf{未修} \\
-7 & 输出语句 & 一处 \texttt{\%} 未转义，运行到标准误提示时抛 \texttt{TypeError} & \textbf{已修（2026-10-20）} \\
+7 & 输出语句 & 一处 \texttt{\%} 未转义，运行到标准误提示时抛 \texttt{TypeError} & 已修 \\
+8 & 处理变量 & 读取 \texttt{policy\_type}，不读 \texttt{verified}；未核实的处理单位会进入主估计 & 已加 \texttt{--exclude-city}，主估计剔除滨州 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{第 7 条值得单独说明}：该 bug 使 \texttt{run\_did.py} 在打印完结果后崩溃，因此“数字跑出来了”与“脚本正常结束”是两件事。本版已修，并确认全流程正常退出。
-
 \subsection{本附录的小结：哪些数字可以引用}
 
-\textbf{可以引用：} 三个批次的构成；处理变量覆盖 6.6\%（窗口内 10.9\%）；安慰剂结果变量的两个系数；安慰剂“日”扫描的方向性结论；三个批次的前置期；两个固定效应设定下的 $\beta$ 与有效聚类数（306 与 33）；随机化推断的 $p$ 值与边界；$\sigma=35.3$。
+\textbf{可以引用：} 三个批次；处理覆盖 6.6\%（窗口内 11.0\%）；安慰剂结果变量的两个系数；安慰剂“日”扫描的方向性结论；三个批次的前置期；两个固定效应设定下的 $\beta$ 与有效聚类数（305 与 32）；随机化推断的 $p$ 值与边界；$\sigma=35.3$；以及\textbf{表~\ref{tab:binzhou} 关于未核实城市足以改变符号的演示}。
 
 \textbf{不可以引用：}
 \begin{itemize}
   \item 任何单一的因果效应点估计。\textbf{本文不报告禁放效应的大小。}
-  \item 旧面板的 $-42.60$、$+10.80$ 与“符号翻转”。它们已被当前面板推翻。
-  \item “$p=0.85$ 说明检验校准”这一论证。它已被 KS 检验取代。
+  \item 旧面板的 $-42.60$、$+10.80$、$-31.74$、$-5.34$，以及任何版本的“符号翻转已撤回”或“符号翻转成立”。
+  \item “$p=0.85$ 说明检验校准”这一论证。
 \end{itemize}

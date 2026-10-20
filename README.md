@@ -82,6 +82,7 @@ python3 -I scripts/collapse_panel.py
 python3 -I scripts/check_province_map.py
 
 # 7. 第一层估计：事件路径 + DCDH 式逐期估计 + TWFE
+python3 -I scripts/run_did.py --min-year 2021 --exclude-city 滨州   # 主估计（只含已核实单位）
 python3 -I scripts/run_did.py --same-province                  # 同省对照
 python3 -I scripts/run_did.py --prov-year-fe                    # 省份×年份固定效应
 python3 -I scripts/run_did.py --outcome pm25_base               # 安慰剂结果变量

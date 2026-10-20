@@ -192,6 +192,9 @@ def main():
                     help="pm25_base（除夕前 7—2 日）是**安慰剂结果变量**：燃放管制不该"
                          "改变年前基线，若它在切换当期也出现大系数，说明估计量在捡拾"
                          "城市自身的趋势，而非政策效应")
+    ap.add_argument("--exclude-city", default="",
+                    help="逗号分隔，剔除指定城市。用于把证据档为 verified=N 的"
+                         "处理单位排除出主估计（例如滨州：方案原文未取得）")
     ap.add_argument("--min-year", type=int, default=0,
                     help="只用该年及以后的观测（默认自动取处理城市首条记录的年份）")
     ap.add_argument("--no-truncate", action="store_true",
@@ -252,6 +255,12 @@ def main():
     else:
         min_year = args.min_year or (max(first_ban.values()) if first_ban else 0)
     recs = [r for r in recs if r["_year"] >= min_year]
+    excl = {c.strip() for c in args.exclude_city.split(",") if c.strip()}
+    if excl:
+        n0 = len({r["city"] for r in recs})
+        recs = [r for r in recs if r["city"] not in excl]
+        print("已剔除城市：%s（%d 城）" % ("、".join(sorted(excl)),
+                                        n0 - len({r["city"] for r in recs})))
     drv = sorted(c for c, y in first_ban.items() if y == min_year)
     print("窗口起点 %d（避免把「首次入记录」误当切换）%s"
           % (min_year,

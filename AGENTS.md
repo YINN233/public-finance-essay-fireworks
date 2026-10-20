@@ -69,7 +69,7 @@ python3 -I scripts/check_coverage.py    # 3 覆盖率诊断
 python3 -I scripts/merge_policy.py      # 4 并入政策；逐行校验字段数，输出有 !! 即为错位
 python3 -I scripts/collapse_panel.py    # 5 折叠为城市×春节年份（依赖第 4 步的输出）
 python3 -I scripts/check_province_map.py        # 6 校验城市→省份映射
-python3 -I scripts/run_did.py --same-province   # 7 第一层估计
+python3 -I scripts/run_did.py --min-year 2021 --exclude-city 滨州   # 7 第一层估计（主估计只含已核实处理单位）
 python3 -I scripts/placebo_days.py --province 河南 --treat-year 2023   # 8 安慰剂「日」
 python3 -I scripts/rand_inference.py --province 河南 --year 2023       # 9 随机化推断
 python3 -I scripts/observed_damage.py --write                           # 10 观测损害法（绕开 DK）
@@ -114,6 +114,7 @@ python3 scripts/make_figs.py --data-dir data --outdir figs            # 11 出�
 - **主线 = 工具选择。** 国家《空气质量持续改善行动计划》（国发〔2023〕24号）与秋冬季方案（环大气〔2023〕73号）**全文不含"烟花爆竹"** ⇒ 2023 年后城市写不写这条是**地方自主加码**。34 城取证：**取得原文的 30 城中 23 城提到（77%）、11 城独立列项（37%）**；7 城零命中、4 城未找到（不计入分母）。若把未找到计入分母则为 23/34 ≈ 68%。
 - **文献三块已完成（2026-10-17）**。两条结论改写了论文写法：① "成本可见性"框架已有文献（Beiser-McGrath et al. 2023 最接近），**本文定位为应用，不是自创**；② 中文财税文献的主流建议是**提高该税目税率**（安体富、樊勇 2006；庞凤喜、王绿荫 2020），**本文须正面反驳"税率是约束条件"**。
 - **论文已写完初稿（2026-10-17）**：`docs/论文正文.md`，摘要 + 九节 + 附录 A/B/C，约 1.81 万字。
-- **论文正本已转为 LaTeX（2026-10-20）**：`paper/main.tex`，`make` 编译，51 页（正文第 3—26 页），零 overfull。
+- **论文正本为 LaTeX**：`paper/main.tex`，`make` 编译，53 页（正文第 3—31 页 = 29 页），零 overfull。
+- **主估计剔除滨州（verified=N）**：`run_did.py --exclude-city 滨州`。含滨州时 β 为 −31.74 / −5.34，剔除后为 −36.70 / +1.12——**一个未核实城市的去留足以改变符号**，这是附录 A 表 A.8 的核心证据。
 - **§7.4 新增观测损害法（2026-10-20）**：不给“一公斤排放”定价，直接给观测浓度定价，绕开扩散参数 DK。比值区间由三个数量级收窄到 0.03—2.1；**水平仍不可识别，但城际离散稳健（p90/p10 = 9.3，23% 的城市-年初一无尖峰）**。
 - **剩余收尾**：封面五处姓名待填、六处【待核】原件、山西面板城市数（10 还是 11）、岳阳等地经费年份、人均烟花支出的一手来源。
