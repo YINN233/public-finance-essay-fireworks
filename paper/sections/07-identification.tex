@@ -2,7 +2,7 @@
 
 \subsection{设定与样本}\label{sec:id-sample}
 
-以城市 $\times$ 春节年份为观测单位，处理变量为“是否全面禁放”（\texttt{ban}）。因中国禁放政策交错实施、且 2023 年后部分城市由禁改限（Yang et al., 2026），处理\textbf{可逆转}，故主估计量采用 de Chaisemartin \& D'Haultf\oe uille（2020）允许处理逆转的估计量；Callaway \& Sant'Anna（2021）要求处理为吸收态，仅作附录对照。多向固定效应用交替投影（Frisch--Waugh--Lovell，FWL）实现，即通常所说的\textbf{双向固定效应}（two-way fixed effects，TWFE）模型；聚类稳健标准误采用 CR1 形式（只乘 $G/(G-1)$），Stata 的 \texttt{reghdfe} 默认还会再乘 $(N-1)/(N-K)$，两种口径都报告。
+以城市 $\times$ 春节年份为观测单位，处理变量为“是否全面禁放”（\texttt{ban}）。因中国禁放政策交错实施、且 2023 年后部分城市由禁改限（Yang et al., 2026），处理\textbf{可逆转}，故按 de Chaisemartin \& D'Haultf\oe uille（2020）的思路按切换队列构造逐期事件路径；Callaway \& Sant'Anna（2021）要求处理为吸收态，仅作附录对照。主表报告的 $\beta$ 是\textbf{双向固定效应}（two-way fixed effects，TWFE）系数，用交替投影（Frisch--Waugh--Lovell，FWL）实现——在只有 6 个处理单位的情况下，dCDH 估计量给不出可用的标准误，因此本文只借它的分组思路，不把它当作报告口径；聚类稳健标准误采用 CR1 形式（只乘 $G/(G-1)$），Stata 的 \texttt{reghdfe} 默认还会再乘 $(N-1)/(N-K)$，两种口径都报告。
 
 样本为 \textbf{305 城 $\times$ 6 年 $=1{,}830$ 行}（2021—2026）。窗口起点取 2021，是因为山西各市的首条政策记录始于该年；更早的窗口会把“首次进入记录”误当成一次 $0\rightarrow1$ 的切换。
 
@@ -24,7 +24,7 @@
 \end{tabular}
 \end{table}
 
-\noindent\textbf{滨州被排除出主估计。} 滨州与东营同日施行限$\rightarrow$禁，但其方案原文未取得、证据档为 \texttt{verified=N}。按本仓库的纪律（只有核过一手来源的事件才进入主分析），主估计只使用已核实的处理单位。把它放回去会使省份 $\times$ 年份估计由 $+1.12$ 变为 $-5.34$——\textbf{一个未核实城市的去留足以改变符号}，这一点在第~\ref{sec:fe}~节展开。
+\noindent\textbf{滨州被排除出主估计。} 滨州与东营同日施行限$\rightarrow$禁，但其方案原文未取得、证据档为 \texttt{verified=N}。按本仓库的纪律，证据档为 \texttt{verified=N} 的事件应排除出主分析。需要说明：河南 2023 的 5 个处理单位目前同样只有二手来源（\texttt{verified=N}），本文纳入它们，是因为日期与方向在三份独立来源上一致；它们不是一手核实。因此准确的表述是“6 个可用的市级切换单位”，而不是“6 个已核实单位”。把它放回去会使省份 $\times$ 年份估计由 $+1.12$ 变为 $-5.34$——\textbf{一个未核实城市的去留足以改变符号}，这一点在第~\ref{sec:fe}~节展开。
 
 \paragraph{处理变量的覆盖是本节最根本的限制。}
 
