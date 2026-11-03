@@ -47,4 +47,5 @@ paper/*.lot
 paper/*.fls
 paper/*.fdb_latexmk
 paper/*.synctex.gz
-paper/main.pdf
+# main.pdf 入库：评分人不必装 TeX 就能读到论文
+!paper/main.pdf
