@@ -46,6 +46,9 @@ import csv
 import os
 import statistics as st
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 from collections import defaultdict
 
 # -I（隔离模式）不会把脚本所在目录放进 sys.path，故显式加入，才能从同目录导入。

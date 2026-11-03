@@ -41,7 +41,11 @@ import argparse
 import csv
 import os
 import statistics as st
+import sys
 from collections import defaultdict
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 
 D1_REL = 1
 BASE_RELS = (-7, -6, -5, -4, -3, -2)

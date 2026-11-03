@@ -44,6 +44,9 @@ import random
 import statistics as st
 import sys
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from merge_policy import PROVINCE_CITIES   # noqa: E402
 

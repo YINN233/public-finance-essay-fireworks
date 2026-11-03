@@ -29,6 +29,9 @@ import argparse
 import csv
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 from collections import defaultdict
 from datetime import date
 

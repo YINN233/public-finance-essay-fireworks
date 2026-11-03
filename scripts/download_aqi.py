@@ -31,6 +31,9 @@ quotsoft.net/air 全国城市空气质量数据：春节窗口原始文件下载
 import argparse
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 import time
 import urllib.error
 import urllib.request

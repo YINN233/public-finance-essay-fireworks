@@ -26,6 +26,9 @@ import argparse
 import csv
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -79,9 +82,17 @@ def main():
             print("     %s：%s vs %s" % (c, a, b))
 
     # ---- 检查 1：覆盖 ----
+    try:
+        panel_rows = list(csv.DictReader(open(args.panel, encoding="utf-8-sig")))
+    except FileNotFoundError:
+        print("!! 找不到面板：%s" % args.panel)
+        print("   面板由 build_panel.py 从 data/raw/ 生成，请先运行：")
+        print("     python3 -I scripts/build_panel.py")
+        return 1
+
     cities = []
     seen = set()
-    for r in csv.DictReader(open(args.panel, encoding="utf-8-sig")):
+    for r in panel_rows:
         c = r["city"]
         if c not in seen:
             seen.add(c)
