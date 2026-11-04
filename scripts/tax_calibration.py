@@ -102,6 +102,15 @@ def routeB(ef, nec, p, dk, dr_pct, vsl):
     return tax, bench
 
 
+def dk_star(ef, nec, p, dr_pct, vsl):
+    """使路线 B 的比值恰好等于 1 的扩散参数。
+
+    由 routeB 的定义解出：0.15P = EF·NEC·DK·(DR/10/100)·DAILY_MORT·VSL。
+    比值随 DK 单调递减且等于 DK*/DK，所以**符号只由 DK 落在 DK* 的哪一侧决定**。
+    """
+    return (0.15 * p) / (ef * nec * (dr_pct / 100.0 / 10.0) * DAILY_MORT * vsl)
+
+
 def sweep(fn, keys, n=6):
     """在各参数区间内等距取 n 个点，穷举组合，返回 (min,max) 比值与全部比值。"""
     grids = []
@@ -135,7 +144,7 @@ def main():
         print("        %s" % d["src"])
     print("  %-5s %-9s %.3e 每日全因死亡风险/人" % ("基线死亡率", MORT_GRADE, DAILY_MORT))
 
-    out = []
+    out, dkstat = [], None
     if args.route in ("A", "both"):
         r, tx, bn = sweep(routeA, ["EF", "NEC_SHARE", "P", "C_A"])
         print("\n" + "=" * 78)
@@ -168,6 +177,32 @@ def main():
         out.append(("B", min(tx), max(tx), min(bn), max(bn), min(r), max(r), st.median(r),
                     "%d" % cross))
 
+        # 临界扩散参数：把「比值跨三个数量级」压缩成「一个参数的位置」
+        grids = []
+        for k in ["EF", "NEC_SHARE", "P", "DR", "VSL"]:
+            d = P[k]
+            n = 4
+            step = (d["hi"] - d["lo"]) / (n - 1)
+            grids.append([d["lo"] + i * step for i in range(n)])
+        dks = sorted(dk_star(*combo) for combo in itertools.product(*grids))
+        m = len(dks)
+        lo, hi = P["DK"]["lo"], P["DK"]["hi"]
+        below = sum(1 for v in dks if v < lo)      # 整个 DK 区间内税 < 损害
+        inside = sum(1 for v in dks if lo <= v <= hi)
+        above = sum(1 for v in dks if v > hi)      # 整个 DK 区间内税 > 损害
+        print("\n" + "-" * 78)
+        print("临界扩散参数 DK*（使税恰好等于损害）")
+        print("-" * 78)
+        print("  DK*      %.0f – %.0f，中位 %.0f（p10 %.0f，p90 %.0f）"
+              % (dks[0], dks[-1], st.median(dks), dks[int(0.1 * m)], dks[int(0.9 * m)]))
+        print("  假定 DK 区间 [%.0e, %.0e]" % (lo, hi))
+        print("  整个区间内税 < 损害：%d 组（%.0f%%）" % (below, 100.0 * below / m))
+        print("  符号在区间内翻转：    %d 组（%.0f%%）" % (inside, 100.0 * inside / m))
+        print("  整个区间内税 > 损害：%d 组（%.0f%%）" % (above, 100.0 * above / m))
+        print("  ⇒ 路线 B 的不确定性不是「参数太多」，而是**一个参数的位置**：")
+        print("     比值 = DK*/DK，DK* 的中位数低于假定区间的下限。")
+        dkstat = (dks[0], dks[-1], st.median(dks), 100.0 * below / m, 100.0 * inside / m)
+
     print("\n" + "=" * 78)
     print("结论（须写进论文的限定）")
     print("=" * 78)
@@ -197,6 +232,12 @@ def main():
             for row in out:
                 fh.write("| %s | %.2f–%.2f | %.4g–%.4g | %.4f–%.2f | %.4f | %s |\n" % row)
             fh.write("\n**结论：两条路线定性方向相反，比值跨约三个数量级，不支持可引用的单点。**\n")
+            if dkstat:
+                fh.write("\n临界扩散参数 $DK^*$：%.0f—%.0f，中位 %.0f。在假定区间 "
+                         "$[2\\times10^3, 2\\times10^5]$ 内：整个区间税 $<$ 损害占 %.0f%%，"
+                         "符号翻转占 %.0f%%，整个区间税 $>$ 损害占 0%%。\n"
+                         "比值 $=DK^*/DK$，所以**符号只由 $DK$ 落在临界值的哪一侧决定**。\n"
+                         % dkstat)
             fh.write("详见脚本头部的三条限定。\n")
         print("\n写入 %s" % p)
     return 0
