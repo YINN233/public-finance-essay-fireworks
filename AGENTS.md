@@ -17,6 +17,7 @@
 essay-project/
 ├── data/         面板与手工输入（大文件不入库，见 .gitignore）
 │   ├── city_province.csv    390 城→省份        【手工，入库】
+│   ├── city_coords.csv      306 城经纬度（气象抓取用）【脚本+手工补齐，入库】
 │   ├── enforcement.csv      执法数据样板        【手工，入库】
 │   └── samples/             两个单日样例
 ├── policy/
@@ -56,7 +57,7 @@ essay-project/
 - **只用标准库**（`numpy` / `matplotlib` 仅供绘图）。**一律 `python3 -I` 运行。**
   ⚠️ `-I`（隔离模式）**不把脚本目录放进 `sys.path`**——同目录导入须显式 `sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))`。
 - **默认路径以仓库根为基准**：各脚本已在 `parse_args` 后 `chdir` 到仓库根，绝对路径参数不受影响。
-- **数据文件不入库**（`.gitignore` 已配）。三个手工输入例外：`policy/policy.csv`、`data/enforcement.csv`、`data/city_province.csv`。
+- **数据文件不入库**（`.gitignore` 已配）。四个例外（脚本无法再生）：`policy/policy.csv`、`data/enforcement.csv`、`data/city_province.csv`、`data/city_coords.csv`。
 - **编码**：数据是 UTF-8，**不要用 GBK 转码**（会把中文列名变乱码）。
 - 新增城市后必跑 `check_province_map.py`——**城市没有省份归属时，同省对照会静默退化为全体对照**，不报错。
 
@@ -73,8 +74,13 @@ python3 -I scripts/run_did.py --min-year 2021 --exclude-city 滨州   # 7 第一
 python3 -I scripts/placebo_days.py --province 河南 --treat-year 2023   # 8 安慰剂「日」
 python3 -I scripts/rand_inference.py --province 河南 --year 2023       # 9 随机化推断
 python3 -I scripts/observed_damage.py --write                           # 10 观测损害法（绕开 DK）
-python3 scripts/make_figs.py --data-dir data --outdir figs            # 11 出图
+python3 -u -I scripts/fetch_era5.py                                    # 11 抓气象（约 7 分钟，可重入）
+python3 -I scripts/met_analysis.py --write                              # 12 区域天气能解释多少
+python3 scripts/make_figs.py --data-dir data --outdir figs            # 13 出图
 ```
+
+第 11、12 步**独立于主链**，只依赖第 2 步的面板；不跑它们不影响前 10 步。
+`fetch_era5.py` 的时区由接口的 `timezone=Asia/Shanghai` 给出，脚本不做 UTC 偏移运算。
 
 ## 六、agent 派发规矩
 
@@ -101,6 +107,7 @@ python3 scripts/make_figs.py --data-dir data --outdir figs            # 11 出�
 | `docs/论文-工具选择证据.md` | **主线**：数量工具为何是地方自主选择、东营制度链路、消费税结构、对照表 |
 | `docs/参数-庇古校准.md` | 庇古校准的三块参数与来源，及三个陷阱 |
 | `docs/结果-第一层估计.md` | 第一层识别诊断、三轮独立复核记录、两条自我更正 |
+| `docs/结果-气象.md` | **省×年共同冲击里有多少是区域天气**：ERA5 代理变量的增量解释力、系数、局限 |
 | `docs/spec-研究设计.md` | 研究问题、制度事实与核实状态 |
 | `policy/README.md` | 政策采集手册（**填表前先读**） |
 | `policy/可行性普查.md` | 政策变换存量普查；山东"限改禁"的核实 |
@@ -114,8 +121,9 @@ python3 scripts/make_figs.py --data-dir data --outdir figs            # 11 出�
 - **主线 = 工具选择。** 国家《空气质量持续改善行动计划》（国发〔2023〕24号）与秋冬季方案（环大气〔2023〕73号）**全文不含"烟花爆竹"** ⇒ 2023 年后城市写不写这条是**地方自主加码**。34 城取证：**取得原文的 30 城中 23 城提到（77%）、11 城独立列项（37%）**；7 城零命中、4 城未找到（不计入分母）。若把未找到计入分母则为 23/34 ≈ 68%。
 - **文献三块已完成（2026-10-17）**。两条结论改写了论文写法：① "成本可见性"框架已有文献（Beiser-McGrath et al. 2023 最接近），**本文定位为应用，不是自创**；② 中文财税文献的主流建议是**提高该税目税率**（安体富、樊勇 2006；庞凤喜、王绿荫 2020），**本文须正面反驳"税率是约束条件"**。
 - **论文已写完初稿（2026-10-17）**：`docs/论文正文.md`，摘要 + 九节 + 附录 A/B/C，约 1.81 万字。
-- **论文正本为 LaTeX**：`paper/main.tex`，`make` 编译，53 页（正文 30 页，页脚编号 2—31；已贴 30 页上限，再改正文须先压缩），零 overfull、零缺字；`paper/main.pdf` 已入库。
+- **论文正本为 LaTeX**：`paper/main.tex`，`make` 编译，57 页（正文 30 页，页脚编号 2—31；已贴 30 页上限，再改正文须先压缩），零 overfull、零缺字；`paper/main.pdf` 已入库。
 - **主估计剔除滨州（verified=N）**：`run_did.py --exclude-city 滨州`。含滨州时 β 为 −31.74 / −5.34，剔除后为 −36.70 / +1.12——**一个未核实城市的去留足以改变符号**，这是附录 A 表 A.8 的核心证据。
 - **§7.4 新增观测损害法（2026-10-20）**：不给“一公斤排放”定价，直接给观测浓度定价，绕开扩散参数 DK。比值区间由三个数量级收窄到 0.02—1.5；**水平仍不可识别，但城际离散稳健（p90/p10 = 9.3，23% 的城市-年初一无尖峰）**。
 - **剩余收尾**：封面五处姓名待填、六处【待核】原件、山西面板城市数（10 还是 11）、岳阳等地经费年份、人均烟花支出的一手来源。
 - **2026-11-03**：外部审阅（`docs/审阅-仓库评价.md`）与修订方案（`docs/审阅-改进方案.md`）已入库，修订在分支 `review/ai-evaluation` 上进行。
+- **2026-11-04**：ERA5 气象匹配完成（`scripts/fetch_era5.py` + `scripts/met_analysis.py`，附录 D）。省级气象复现省×年成分 30.2 中的 **11.9 个（39%）**，但**这不是初一特有的**：同样变量在除夕与前一天复现 11.8 与 9.7 个点，两天分母更大（43.0 / 43.8）。控制省×年 \NOtwo{} 后只剩 **4.5 个点**。本地气象只解释城市×年残差 35.1 中的 **1.6（5%）**，缺 BLH，是下界。留一均值 11.1 / 29.4 不变。**“天气解释了初一尖峰 39%”是错误说法**；11.9 与基线 21.0 也不可加减。**边界层高度不可得**，用风速与日温差代理。接口限流是每分钟 600 次、每小时 5000 次且按城市数计次——`fetch_era5.py` 的 `SLEEP` 不得低于 4 秒/请求。
