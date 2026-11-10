@@ -69,11 +69,12 @@ def main():
     readme = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()
     agents = open(os.path.join(ROOT, "AGENTS.md"), encoding="utf-8").read()
     paper_readme = open(os.path.join(PAPER, "README.md"), encoding="utf-8").read()
-    check("README 写 59 页", "59 页" in readme)
-    check("README 写正文 30 页", "正文 30 页" in readme)
+    total = m.group(1) if m else "?"
+    check("README 写 %s 页" % total, "%s 页" % total in readme)
+    check("README 写正文 %d 页" % main_pages, "正文 %d 页" % main_pages in readme)
     check("README 不再写 53 页", "53 页" not in readme)
-    check("AGENTS 写 59 页", "59 页" in agents)
-    check("paper/README 写 59 页", "59 页" in paper_readme)
+    check("AGENTS 写 %s 页" % total, "%s 页" % total in agents)
+    check("paper/README 写 %s 页" % total, "%s 页" % total in paper_readme)
     check("数字台账存在", os.path.exists(os.path.join(ROOT, "docs", "数字台账.md")))
     check("气象清单存在", os.path.exists(os.path.join(ROOT, "docs", "气象数据清单.md")))
 
