@@ -9,7 +9,10 @@ main.pdf: $(SRC)
 	$(LATEX) main.tex
 	$(LATEX) main.tex
 
+check: main.pdf
+	python3 -I ../scripts/preflight.py
+
 clean:
 	rm -f main.pdf main.aux main.log main.out main.toc main.lof main.lot main.fls main.fdb_latexmk main.synctex.gz
 
-.PHONY: all clean
+.PHONY: all check clean

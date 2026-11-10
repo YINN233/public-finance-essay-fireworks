@@ -72,7 +72,6 @@ def main():
     ap.add_argument("--placebo-year", type=int, default=0,
                     help="把统计量改在这一次（无政策变动的）转移上计算，用来测检验"
                          "自身的假阳性率。不填则用 --year 指定的那次")
-    ap.add_argument("--treat", default="ban", choices=["ban", "full_ban", "scope1"])
     ap.add_argument("--draws", type=int, default=20000,
                     help="组合数过多时的随机抽样次数")
     ap.add_argument("--out", default="data/rand_inference.csv")
@@ -111,11 +110,9 @@ def main():
 
     # 实际处理组：在 s0→s1 之间由禁放（3）转为非禁放。**安慰剂模式下不变**——
     # 保持 k 不变，才能比较两种情形下的假阳性率。
+    # 处理组固定为「policy_type 由 3 转为非 3」：随机化对象必须与处理定义一致，
+    # 因此本脚本不提供切换处理口径的开关。
     real = sorted(c for c in cities if ptype(c, s0) == "3" and ptype(c, s1) != "3")
-    if args.treat != "ban":
-        print("   注：--treat=%s 仅影响处理变量的构造；本脚本的处理组一律按"
-              "「policy_type 由 3 转为非 3」定义，以免随机化对象与处理的定义脱节"
-              % args.treat)
     if not real:
         print("!! 在 %s 的 %d→%d 转移中找不到「禁放→非禁放」的城市"
               % (args.province, s0, s1), file=sys.stderr)

@@ -7,7 +7,7 @@ make            # 等价于 xelatex main.tex 跑两遍
 make clean
 ```
 
-产物为 `main.pdf`，53 页（正文 30 页，已贴上限）。
+产物为 `main.pdf`，59 页（正文 30 页，已贴上限）。
 
 ## 结构
 
@@ -21,6 +21,7 @@ make clean
 | `appendix/a-identification.tex` | 附录 A　第一层完整诊断 |
 | `appendix/b-documents.tex` | 附录 B　34 城取证表 |
 | `appendix/c-calibration.tex` | 附录 C　参数表与敏感性 |
+| `appendix/d-weather.tex` | 附录 D　气象匹配与 BLH 一致性检验 |
 | `sections/99-references.tex` | 参考文献（作者—年份制） |
 
 分节存放是为了五人并行修改时减少冲突：**每人只改自己那一节的文件**。
@@ -30,7 +31,7 @@ make clean
 | 要求 | 落实 |
 |---|---|
 | 摘要 < 300 词 | `01-abstract.tex`，中文约 430 字（约 280—290 词） |
-| 正文 ≤ 30 页、双倍行距、12 号字 | `preamble.tex`：`12pt` + `\doublespacing` + A4 边距 2.54 cm；正文 30 页（页脚编号 2—31） |
+| 正文 ≤ 30 页、双倍行距、12 号字 | `preamble.tex`：`12pt` + `\doublespacing` + A4 边距 2.54 cm；正文 30 页（页脚编号 2—31），全文 59 页 |
 | 页边距 ≥ 1 英寸 | `geometry`：上下左右均 2.54 cm |
 | 标题页写明每位成员贡献 | `00-cover.tex`，位于摘要之前 |
 | 参考文献限于优质中英文期刊 | 全部为期刊或学术专著；政府文件与国家标准走正文出处，不进文献表 |
