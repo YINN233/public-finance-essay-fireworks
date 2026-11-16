@@ -52,3 +52,6 @@ paper/*.fdb_latexmk
 paper/*.synctex.gz
 # main.pdf 入库：评分人不必装 TeX 就能读到论文
 !paper/main.pdf
+
+# Office 打开文件时的锁文件
+~$*
